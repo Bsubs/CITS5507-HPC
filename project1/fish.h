@@ -1,8 +1,10 @@
 #ifndef FISH_H
 #define FISH_H
 
-#define NUMFISH 1000
-#define STARTWEIGHT 1
+#define NUMFISH 10000
+#define STARTWEIGHT 1000
+#define NUMSTEPS 10000
+
 typedef struct fish {
     double euclDist;
     // Current

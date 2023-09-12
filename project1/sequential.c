@@ -4,7 +4,6 @@
 #include "sequential.h"
 
 void sequential(Fish* fishArray){
-    // NUMSTEPS defined in sequential.h
     for(int i = 0; i < NUMSTEPS; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;

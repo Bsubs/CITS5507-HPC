@@ -10,6 +10,7 @@ ssh -Y jookaitay@setonix.pawsey.org.au
 
 ## Transferring files to setonix
 scp * jookaitay@setonix.pawsey.org.au:
+rm -f .*
 
 ## Running the program
 sbatch sequential.sh
