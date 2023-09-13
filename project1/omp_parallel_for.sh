@@ -12,7 +12,7 @@ gcc -c main.c
 gcc -c fish.c
 gcc -c sequential.c
 gcc -c omp_parallel_for.c
-gcc -o omp_parallel_for main.o fish.o sequential.o omp_parallel_for.o -lm
+gcc -o omp_parallel_for -fopenmp main.o fish.o sequential.o omp_parallel_for.o -lm 
 
 export OMP_NUM_THREADS=16 
 

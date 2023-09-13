@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <omp.h>
 
 #include "fish.h"
 #include "sequential.h"
@@ -8,8 +9,7 @@
 
 int main(int argc, char *argv[]) {
     // Run sequential code
-    clock_t start, end;
-    start = clock();
+    double start = omp_get_wtime();
 
     srand(time(NULL));
     Fish* fishArray = initializeFish();
@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
     // Remember to free
     free(fishArray);
     
-    end = clock();
-    double timeElapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
+    double end = omp_get_wtime();
+    double timeElapsed = end - start;
     printf("Total time for sequential elapsed: %10.6f\n",timeElapsed );
 
     // Run parallel for code
-    start = clock();
+    start = omp_get_wtime();
 
     srand(time(NULL));
     Fish* fishArray1 = initializeFish();
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     // Remember to free
     free(fishArray1);
     
-    end = clock();
-    timeElapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
+    end = omp_get_wtime();
+    timeElapsed = end - start;
     printf("Total time for parallel_for elapsed: %10.6f\n",timeElapsed );
 }
