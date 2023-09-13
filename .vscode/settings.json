@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "omp_parallel_for_schedule.h": "c"
+    }
+}
