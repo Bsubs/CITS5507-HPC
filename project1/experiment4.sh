@@ -4,15 +4,16 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=4
-#SBATCH --time=00:05:00
+#SBATCH --time=00:40:00
 
 module load gcc
 
-gcc -c main.c
+gcc -c experiment4.c
 gcc -c fish.c
 gcc -c sequential.c
-gcc -o sequential main.o fish.o sequential.o -lm
+gcc -c parallel_functions.c
+gcc -o experiment4 -fopenmp experiment4.o fish.o sequential.o parallel_functions.o -lm 
 
 export OMP_NUM_THREADS=16 
 
-srun ./sequential
+srun ./experiment4

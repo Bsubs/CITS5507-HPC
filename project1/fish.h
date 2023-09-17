@@ -2,7 +2,7 @@
 #define FISH_H
 
 #define NUMFISH 10000
-#define STARTWEIGHT 1000
+#define STARTWEIGHT 10000
 #define NUMSTEPS 10000
 
 typedef struct fish {
@@ -16,7 +16,7 @@ typedef struct fish {
 } Fish;
 
 // Functions implemented
-Fish* initializeFish();
+Fish* initializeFish(int numfish);
 double distance(double x, double y);
 void swim(Fish* fish1);
 void eat(Fish* fish1, double maxWeight, int step);

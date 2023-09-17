@@ -2,6 +2,6 @@
 #define SEQ_H
 #include "fish.h"
 
-void sequential(Fish* fishArray);
+void sequential(Fish* fishArray, int numfish, int numsteps);
 
 #endif

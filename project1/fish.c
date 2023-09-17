@@ -7,9 +7,9 @@
  * Initializes the fish array
  * Creates an array equal to the size of NUMFISH defined in fish.h
 */
-Fish* initializeFish(){
+Fish* initializeFish(int numfish){
     // Dynamically allocate memory according to NUMFISH
-    Fish* fishArray = (Fish*)malloc(NUMFISH * sizeof(Fish));
+    Fish* fishArray = (Fish*)malloc(numfish * sizeof(Fish));
     if (fishArray == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(1); 
@@ -18,7 +18,7 @@ Fish* initializeFish(){
     // Allocate the initial positions between -100 and 100
     // Allocate initial weight 1
     // We can probably parallelize this or not probably not required
-    for(int i = 0; i < NUMFISH; i++){
+    for(int i = 0; i < numfish; i++){
         fishArray[i].x_c = ((double)rand() / RAND_MAX) * 200.0 - 100.0;
         fishArray[i].y_c = ((double)rand() / RAND_MAX) * 200.0 - 100.0;
     }
