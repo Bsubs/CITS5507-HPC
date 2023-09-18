@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "omp_parallel_for_schedule.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "limits": "c"
     }
 }

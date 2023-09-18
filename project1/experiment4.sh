@@ -8,11 +8,7 @@
 
 module load gcc
 
-gcc -c experiment4.c
-gcc -c fish.c
-gcc -c sequential.c
-gcc -c parallel_functions.c
-gcc -o experiment4 -fopenmp experiment4.o fish.o sequential.o parallel_functions.o -lm 
+gcc -o experiment4 experiment4.c fish.c sequential.c parallel_functions.c -fopenmp -lm
 
 export OMP_NUM_THREADS=16 
 

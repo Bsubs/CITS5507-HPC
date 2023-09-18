@@ -4,9 +4,14 @@
 #include "fish.h"
 
 /**
- * Initializes the fish array
- * Creates an array equal to the size of NUMFISH defined in fish.h
-*/
+ * @brief Initialize an array of Fish structures.
+ *
+ * This function dynamically allocates memory for an array of Fish structures 
+ * and initializes each fish with random coordinates within a bounded range.
+ *
+ * @param numfish The number of fish to initialize.
+ * @return A pointer to the dynamically allocated array of Fish structures.
+ */
 Fish* initializeFish(int numfish){
     // Dynamically allocate memory according to NUMFISH
     Fish* fishArray = (Fish*)malloc(numfish * sizeof(Fish));
@@ -27,32 +32,47 @@ Fish* initializeFish(int numfish){
 }
 
 /**
- * Distance function
- * input: A Fish object
- * output: Euclidean distance from origin
-*/
+ * @brief Returns the euclidean distance given two points.
+
+ * @param x The x coordinate.
+ * @param y The y coordinate
+ * @return The calculated distance.
+ */
 double distance(double x, double y) {
     return sqrt(pow(x, 2) + pow(y, 2));
 }
 
 /**
- * Helper function to ensure that values do not stray outside of
- * predefined boundaries
-*/
-double clamp(double value, double min, double max) {
-    if (value < min) {
-        value = min;
+ * @brief Clamps a value between two other values.
+ *
+ * This function ensures that a value does not stray beyond a min and max value 
+ *
+ * @param value The value to clamp
+ * @param min The minimum allowed 
+ * @param max The maximum allowed 
+ */
+void clamp(double* value, double min, double max) {
+    if (value == NULL) {
+        return;
     }
-    else if (value > max) {
-        value = max;
+    
+    if (*value < min) {
+        *value = min;
+    } else if (*value > max) {
+        *value = max;
     }
-    return value;
 }
 
 /**
- * A fish eats in every step
-*/
-void eat(Fish* fish1, double maxWeight, int step){
+ * @brief Updates the weight of a fish during a simulation step.
+ *
+ * This function updates the weight of a fish instance. The weight is bounded within 0 and 2w.
+ *
+ * @param fish1 Pointer to the Fish instance whose weight is to be updated.
+ * @param maxObj The objective function in the current step.
+ * @param step The current simulation step. If step is 0, the weight is reset to STARTWEIGHT.
+ */
+void eat(Fish* fish1, double maxObj, int step){
     if (step == 0) {
         fish1->weight_c = STARTWEIGHT;
     }
@@ -61,12 +81,12 @@ void eat(Fish* fish1, double maxWeight, int step){
         double deltaI = distance(fish1->x_c, fish1->y_c) - fish1->euclDist;
 
         // Calculate new weight and clamp it between boundary
-        if(maxWeight == 0) {
+        if(maxObj == 0) {
             weight = 0;
         }
         else {
-            weight += deltaI / maxWeight;
-            weight = clamp(weight, 0, 2*STARTWEIGHT);
+            weight += deltaI / maxObj;
+            clamp(&weight, 0, 2*STARTWEIGHT);
         }
         fish1->weight_p = fish1->weight_c;
         fish1->weight_c = weight;
@@ -74,8 +94,15 @@ void eat(Fish* fish1, double maxWeight, int step){
 }
 
 /**
- * A fish swims in a random direction if it can eat in the current round
-*/
+ * @brief Updates the position of a fish in the current step.
+ *
+ * This function updates the position of a fish instance if its current weight is 
+ * less than two times the STARTWEIGHT. The new position is calculated randomly 
+ * within certain bounds and is then clamped to ensure it remains within a 
+ * 200 x 200 square.
+ *
+ * @param fish1 Pointer to the Fish instance whose position is to be updated.
+ */
 void swim(Fish* fish1){
     if(fish1->weight_c < (2 * STARTWEIGHT)) {
         // Add a random number between -0.1 and 0.1
@@ -83,8 +110,8 @@ void swim(Fish* fish1){
         double y_dist = ((double)rand() / RAND_MAX) * (0.1 + 0.1) + fish1->y_c;
 
         // Limit the distance to the boundary
-        x_dist = clamp(x_dist, -100, 100);
-        y_dist = clamp(x_dist, -100, 100);
+        clamp(&x_dist, -100, 100);
+        clamp(&x_dist, -100, 100);
 
         // Previous euclidean distance for caluclation of weight in next step
         fish1->euclDist = distance(fish1->x_c, fish1->y_c);

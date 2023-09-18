@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
             double start = omp_get_wtime();
 
             Fish* fishArray1 = initializeFish(numFishArray[i]);
-            parallelForReduction(fishArray1, numFishArray[i], numsteps);
+            parallelReduction(fishArray1, numFishArray[i], numsteps);
             // Remember to free
             free(fishArray1);
             double end = omp_get_wtime();

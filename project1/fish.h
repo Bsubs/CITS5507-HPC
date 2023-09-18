@@ -19,6 +19,6 @@ typedef struct fish {
 Fish* initializeFish(int numfish);
 double distance(double x, double y);
 void swim(Fish* fish1);
-void eat(Fish* fish1, double maxWeight, int step);
+void eat(Fish* fish1, double maxObj, int step);
 
 #endif
