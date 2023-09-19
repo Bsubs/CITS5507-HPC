@@ -1,0 +1,181 @@
+---
+title: "CITS5507 Project 1 Report"
+author: "Joo Kai Tay (22489437)"
+date: "2023-09-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+```{r}
+library(ggplot2)
+
+```
+
+# Project 1 Report 
+
+## Project Overview
+This project aims to test various sequential and parallel implementations of the Fish School Behaviour (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the code.
+
+## Fish simulation
+The file fish.h contains the definition of a fish in this simulation. The struct Fish contains the following parameters:
+1. double euclDist: This is the euclidean distance of the fish from the origin in the previous step
+2. double x_c: This holds the x coordinate of the fish in the current step
+3. double y_c: This holds the y coordinate of the fish in the current step
+4. double weight_c: This holds the weight of the fish in the current step
+5. double weight_p: This holds the weight of the fish in the previous step
+
+```{}
+typedef struct fish {
+    double euclDist;
+    double x_c;
+    double y_c;
+    double weight_c;
+    double weight_p;
+} Fish;
+```
+
+fish.h also contains declarations for functions that are implemented in fish.c 
+
+This function dynamically allocates memory in the heap for an array of Fish structures and initializes each fish with random coordinates within a 200 x 200 square. The parameter numfish allows the user to specify the size of the array.
+```{}
+Fish* initializeFish(int numfish)
+```
+
+This function simulates a fish eating in the current step. The weight of the fish is bounded between 0 and 2w.
+```{}
+void eat(Fish* fish1, double maxObj, int step)
+```
+
+This function simulates a fish swimming in the current step. 
+```{}
+void swim(Fish* fish1)
+```
+
+## Experiments
+The experiments make use of functions declared in `sequential.h` and `parallel_functions.h`. Each experiment has its corresponding `experimentX.c` and `experimentX.sh` files. The experiments are run on setonix using the command: `sbatch experimentX.sh`
+
+Each experiment was ran 10 times and the results show are an average of those 10 simulations. 
+
+### Experiment 1
+Experiment 1 investigates the effect of changing the number of threads on the time take for computation. 
+Number of threads: 1, 2, 4, 8, 16, 32
+Number of steps: 10,000
+Number of fish: 10,000
+
+```{r, echo=FALSE}
+experiment1 <- data.frame(
+  Num_threads = c(1, 2, 4, 8, 16, 32),
+  Time = c(12.90403, 12.130501, 12.37898, 12.896915, 13.902485, 15.860992)
+)
+
+# Create the plot
+ggplot(experiment1, aes(x = Num_threads, y = Time)) +
+  geom_point() +
+  geom_line() +
+  scale_x_log10(breaks = c(1, 2, 4, 8, 16, 32)) +
+  labs(
+    title = "Time vs Number of Threads",
+    x = "Number of Threads",
+    y = "Time (s)"
+  ) +
+  theme_minimal()
+```
+
+### Experiment 2 
+Experiment 2 investigates the increase in time taken as the number of fish increases. 
+Number of threads: 16
+Number of steps: 10,000
+Number of fish: 5000, 10000, 15000, 20000, 25000
+
+The plot below shows the increase in time as the number of fish increases is linear. 
+
+```{r, echo=FALSE}
+experiment2 <- data.frame(
+  Num_fish = c(5000, 10000, 15000, 20000, 25000),
+  Time = c(6.331361, 12.699427, 19.057465, 25.373998, 31.694911)
+)
+
+# Step 3: Create the plot
+ggplot(experiment2, aes(x = Num_fish, y = Time)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Time vs Number of Fish",
+    x = "Number of Fish",
+    y = "Time (s)"
+  ) +
+  theme_minimal()
+```
+### Experiment 3 
+Experiment 3 investigates the increase in time taken as the number of steps increases. 
+Number of threads: 16
+Number of steps: 5000, 10000, 15000, 20000, 25000
+Number of fish: 10,000
+
+The plot below shows that the increase in time as the number of steps increases is also linear.
+```{r, echo=FALSE}
+experiment3 <- data.frame(
+  Num_steps = c(5000, 10000, 15000, 20000, 25000),
+  Time = c(6.312065, 12.508974, 18.71223, 24.924847, 31.135177)
+)
+
+# Step 3: Create the plot
+ggplot(experiment3, aes(x = Num_steps, y = Time)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Time vs Number of Steps",
+    x = "Number of Steps",
+    y = "Time (s)"
+  ) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE}
+# Create a data frame
+fishSteps <- data.frame(
+  Num = c(5000, 10000, 15000, 20000, 25000, 5000, 10000, 15000, 20000, 25000),
+  Time = c(6.331361, 12.699427, 19.057465, 25.373998, 31.694911, 6.312065, 12.508974, 18.71223, 24.924847, 31.135177),
+  Category = c(rep("Num_Fish", 5), rep("Num_Steps", 5))
+)
+
+# Create the plot
+ggplot(fishSteps, aes(x = Num, y = Time, color = Category, shape=Category)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Time vs Number",
+    x = "Number",
+    y = "Time (s)"
+  ) +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
