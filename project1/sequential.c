@@ -11,7 +11,7 @@ void sequential(Fish* fishArray, int numfish, int numsteps){
 
         // Loops through fish array and finds maxDiff in the current round
         for(int j = 0; j < numfish; j++) {
-            double dist = fishArray[j].euclDist;
+            double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
             if(dist > maxDiff) {maxDiff = dist;}
         }
 

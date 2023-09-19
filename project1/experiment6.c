@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
 
     double totalTime = 0;
-    for(int j = 0; j < 5; j++){
+    for(int j = 0; j < 3; j++){
         double start = omp_get_wtime();
         Fish* fishArray1 = initializeFish(numfish);
 
@@ -31,6 +31,6 @@ int main(int argc, char *argv[]) {
         double timeElapsed = end - start;
         totalTime += timeElapsed;
     }
-    totalTime = totalTime / 5; 
+    totalTime = totalTime / 3; 
     printf("Average time for sections: %10.6f\n", totalTime );
 }

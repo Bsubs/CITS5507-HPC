@@ -20,11 +20,11 @@ int main(int argc, char *argv[]) {
     int numsteps = 10000;
     srand(time(NULL));
 
-    char* scheduleType[] = {"STATIC", "DYNAMIC", "GUIDED"};
+    char* scheduleType[] = {"STATIC", "DYNAMIC", "GUIDED", "RUNTIME"};
 
-    for(int i =0; i < 3; i++) {
+    for(int i =0; i < 4; i++) {
         double totalTime = 0;
-        for(int j = 0; j < 5; j++){
+        for(int j = 0; j < 3; j++){
             double start = omp_get_wtime();
             Fish* fishArray1 = initializeFish(numfish);
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
             double timeElapsed = end - start;
             totalTime += timeElapsed;
         }
-        totalTime = totalTime / 5; 
+        totalTime = totalTime / 3; 
         printf("Average time for %s schedule: %10.6f\n", scheduleType[i], totalTime );
     }
 }

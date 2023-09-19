@@ -20,35 +20,33 @@ int main(int argc, char *argv[]) {
     int numsteps = 10000;
     srand(time(NULL));
 
-    for(int i =0; i < 1; i++) {
-        double totalTime = 0;
-        for(int j = 0; j < 10; j++){
-            double start = omp_get_wtime();
-            Fish* fishArray1 = initializeFish(numfish);
+    double totalTime = 0;
+    for(int j = 0; j < 3; j++){
+        double start = omp_get_wtime();
+        Fish* fishArray1 = initializeFish(numfish);
 
-            parallelTaskloop(fishArray1, numfish, numsteps);
-            free(fishArray1);
-            double end = omp_get_wtime();
-            double timeElapsed = end - start;
-            totalTime += timeElapsed;
-        }
-        totalTime = totalTime / 10; 
-        printf("Average time for taskloop: %10.6f\n", totalTime );
+        parallelTaskloop(fishArray1, numfish, numsteps);
+        free(fishArray1);
+        double end = omp_get_wtime();
+        double timeElapsed = end - start;
+        totalTime += timeElapsed;
     }
+    totalTime = totalTime / 3; 
+    printf("Average time for taskloop: %10.6f\n", totalTime );
+    
 
-    for(int i =0; i < 1; i++) {
-        double totalTime = 0;
-        for(int j = 0; j < 10; j++){
-            double start = omp_get_wtime();
-            Fish* fishArray1 = initializeFish(numfish);
+    totalTime = 0;
+    for(int j = 0; j < 3; j++){
+        double start = omp_get_wtime();
+        Fish* fishArray1 = initializeFish(numfish);
 
-            parallelTasks(fishArray1, numfish, numsteps);
-            free(fishArray1);
-            double end = omp_get_wtime();
-            double timeElapsed = end - start;
-            totalTime += timeElapsed;
-        }
-        totalTime = totalTime / 10; 
-        printf("Average time for tasks: %10.6f\n", totalTime );
+        parallelTasks(fishArray1, numfish, numsteps);
+        free(fishArray1);
+        double end = omp_get_wtime();
+        double timeElapsed = end - start;
+        totalTime += timeElapsed;
     }
+    totalTime = totalTime / 3; 
+    printf("Average time for tasks: %10.6f\n", totalTime );
+    
 }

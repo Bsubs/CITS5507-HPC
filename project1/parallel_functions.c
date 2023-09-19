@@ -21,7 +21,7 @@ void parallelReduction(Fish* fishArray, int numfish, int numsteps){
             // Loops through fish array and finds maxDiff in the current round
             #pragma omp for reduction(max:maxDiff)
             for(int j = 0; j < numfish; j++) {
-                double dist = fishArray[j].euclDist;
+                double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                 if(dist > maxDiff) {maxDiff = dist;}
             }
 
@@ -59,7 +59,7 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
             {
                 #pragma omp for reduction(max: maxDiff) schedule(static)
                 for(int j = 0; j < numfish; j++) {
-                    double dist = fishArray[j].euclDist;
+                    double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
@@ -80,7 +80,7 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
             {
                 #pragma omp for reduction(max: maxDiff) schedule(dynamic)
                 for(int j = 0; j < numfish; j++) {
-                    double dist = fishArray[j].euclDist;
+                    double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
@@ -101,7 +101,7 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
             {
                 #pragma omp for reduction(max: maxDiff) schedule(guided)
                 for(int j = 0; j < numfish; j++) {
-                    double dist = fishArray[j].euclDist;
+                    double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
@@ -112,6 +112,27 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
                 }
 
                 #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(guided)
+                for(int j = 0; j < numfish; j++){
+                    sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
+                    sumOfDistance += fishArray[j].euclDist;
+                }
+            }
+        } else if(strcmp(scheduleType, "RUNTIME") == 0) {
+            #pragma omp parallel
+            {
+                #pragma omp for reduction(max: maxDiff) schedule(runtime)
+                for(int j = 0; j < numfish; j++) {
+                    double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
+                    if(dist > maxDiff) {maxDiff = dist;}
+                }
+
+                #pragma omp for schedule(runtime)
+                for(int j = 0; j < numfish; j++){
+                    eat(&fishArray[j], maxDiff, i);
+                    swim(&fishArray[j]);
+                }
+
+                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(runtime)
                 for(int j = 0; j < numfish; j++){
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
@@ -141,7 +162,7 @@ void parallelTaskloop(Fish* fishArray, int numfish, int numsteps){
                 // Loops through fish array and finds maxDiff in the current round
                 #pragma omp taskloop reduction(max:maxDiff)
                 for(int j = 0; j < numfish; j++) {
-                    double dist = fishArray[j].euclDist;
+                    double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
             }
@@ -262,7 +283,7 @@ void parallelSections(Fish* fishArray, int numfish, int numsteps){
                 {
                     #pragma omp parallel for reduction(max:maxDiff) schedule(dynamic)
                     for(int j = 0; j < numfish; j++) {
-                        double dist = fishArray[j].euclDist;
+                        double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                         if(dist > maxDiff) { maxDiff = dist; }
                     }
                 }
