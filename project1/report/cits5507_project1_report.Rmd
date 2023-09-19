@@ -2,24 +2,28 @@
 title: "CITS5507 Project 1 Report"
 author: "Joo Kai Tay (22489437)"
 date: "2023-09-18"
-output: pdf_document
+output:
+  html_document:
+    number_sections: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 ```
-```{r}
+```{r, echo=FALSE}
 library(ggplot2)
-
+library(dplyr)
+library(readxl)
+```
+```{r, echo=FALSE}
+df <- read_excel("data.xlsx")
 ```
 
-# Project 1 Report 
-
-## Project Overview
+# Project Overview
 This project aims to test various sequential and parallel implementations of the Fish School Behaviour (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the code.
 
-## Fish simulation
+# Fish simulation
 The file fish.h contains the definition of a fish in this simulation. The struct Fish contains the following parameters:
 1. double euclDist: This is the euclidean distance of the fish from the origin in the previous step
 2. double x_c: This holds the x coordinate of the fish in the current step
@@ -54,25 +58,45 @@ This function simulates a fish swimming in the current step.
 void swim(Fish* fish1)
 ```
 
-## Experiments
-The experiments make use of functions declared in `sequential.h` and `parallel_functions.h`. Each experiment has its corresponding `experimentX.c` and `experimentX.sh` files. The experiments are run on setonix using the command: `sbatch experimentX.sh`
+# Experiments
+The experiments make use of functions declared in `sequential.h` and `parallel_functions.h`. Each experiment has its corresponding `experimentX.c` and `experimentX.sh` files. To run an experiment, SSH into Setonix and use the command: `sbatch experimentX.sh` to run he desired experiment. 
 
-Each experiment was ran 10 times and the results show are an average of those 10 simulations. 
+Each experiment was ran 10 times and the results shown are an average of those 10 simulations. 
 
-### Experiment 1
-Experiment 1 investigates the effect of changing the number of threads on the time take for computation. 
-Number of threads: 1, 2, 4, 8, 16, 32
+## Base Case - Sequential 
+The base case for this simulation was implemented using the `void sequential(Fish* fishArray, int numfish, int numsteps)` function implemented in `sequential.c`. The FSB problem was tackled as such: 
+
+1. The outer loop runs for a number of iterations equal to `NUMSTEPS`.
+
+2. The first of the inner loops iterates over all the fish present and finds the maximum difference in the position of the fish in the current and the fish in the previous round.
+
+3. The second of the inner loops uses the maximum difference found in step 2 and performs the eat and swim operations on each fish in the array.
+
+4. The final of the inner loops calculates the numerator and denominator variables for the barycentre.
+
+5. The barycentre is calculated using the values from step 4. 
+
+## Base Case - Parallel 
+The base case for parallel functions in this simulation is the `void parallelReduction(Fish* fishArray, int numfish, int numsteps)` function implemented in `parallel_functions.c`. 
+
+1. The first inner loop is parallelized using `#pragma omp for reduction(max:maxDiff)` inside the parallel region. The reduction clause ensures that the `maxDiff` variable is updated in a thread-safe manner, to avoid any race conditions when updating the variable.
+
+2. The second inner loop is parallelized using `#pragma omp for` as the eat and swim operations are thread-safe, therefore, no special clauses need to be attached to this loop.
+
+3. The last inner loop is also parallelized using `#pragma omp for reduction(+:sumOfProduct,sumOfDistance)` to avoid race conditions when updating the two variables. 
+
+## Experiment 1 - Time taken as number of threads increase
+Experiment 1 investigates the effect of changing the number of threads on the time take for computation. This experiment makes use of the base case functions for both sequential and parallel. The number of steps and fish are held constant and the only variable changed is the number of threads as defined by setting the environment variable `OMP_NUM_THREADS`.  
+
+Number of threads: 1, 2, 4, 8, 16, 32, 64
+
 Number of steps: 10,000
+
 Number of fish: 10,000
 
-```{r, echo=FALSE}
-experiment1 <- data.frame(
-  Num_threads = c(1, 2, 4, 8, 16, 32),
-  Time = c(12.90403, 12.130501, 12.37898, 12.896915, 13.902485, 15.860992)
-)
-
+```{r, echo=FALSE, warning=FALSE}
 # Create the plot
-ggplot(experiment1, aes(x = Num_threads, y = Time)) +
+ggplot(df, aes(x = exp1, y = exp1t)) +
   geom_point() +
   geom_line() +
   scale_x_log10(breaks = c(1, 2, 4, 8, 16, 32)) +
@@ -84,22 +108,21 @@ ggplot(experiment1, aes(x = Num_threads, y = Time)) +
   theme_minimal()
 ```
 
-### Experiment 2 
-Experiment 2 investigates the increase in time taken as the number of fish increases. 
+## Experiment 2 - Investigating time vs number of fish
+Experiment 2 investigates the increase in time taken as the number of fish increases. This experiment makes use of the base case functions for both sequential and parallel. The number of steps and threads are held constant and the only variable changed is the number of fish.  
+
 Number of threads: 16
+
 Number of steps: 10,000
+
 Number of fish: 5000, 10000, 15000, 20000, 25000
 
 The plot below shows the increase in time as the number of fish increases is linear. 
 
-```{r, echo=FALSE}
-experiment2 <- data.frame(
-  Num_fish = c(5000, 10000, 15000, 20000, 25000),
-  Time = c(6.331361, 12.699427, 19.057465, 25.373998, 31.694911)
-)
+```{r, echo=FALSE,warning=FALSE}
 
 # Step 3: Create the plot
-ggplot(experiment2, aes(x = Num_fish, y = Time)) +
+ggplot(df, aes(x = exp2, y = exp2t)) +
   geom_point() +
   geom_line() +
   labs(
@@ -107,23 +130,23 @@ ggplot(experiment2, aes(x = Num_fish, y = Time)) +
     x = "Number of Fish",
     y = "Time (s)"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
-### Experiment 3 
-Experiment 3 investigates the increase in time taken as the number of steps increases. 
+## Experiment 3 - Comparing Steps and Fishes
+Experiment 3 investigates the increase in time taken as the number of steps increases. This experiment makes use of the base case functions for both sequential and parallel. The number of fish and threads are held constant and the only variable changed is the number of steps.  
+
 Number of threads: 16
+
 Number of steps: 5000, 10000, 15000, 20000, 25000
+
 Number of fish: 10,000
 
 The plot below shows that the increase in time as the number of steps increases is also linear.
-```{r, echo=FALSE}
-experiment3 <- data.frame(
-  Num_steps = c(5000, 10000, 15000, 20000, 25000),
-  Time = c(6.312065, 12.508974, 18.71223, 24.924847, 31.135177)
-)
+```{r, echo=FALSE, warning=FALSE}
 
 # Step 3: Create the plot
-ggplot(experiment3, aes(x = Num_steps, y = Time)) +
+ggplot(df, aes(x = exp3, y = exp3t)) +
   geom_point() +
   geom_line() +
   labs(
@@ -131,10 +154,13 @@ ggplot(experiment3, aes(x = Num_steps, y = Time)) +
     x = "Number of Steps",
     y = "Time (s)"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
 
-```{r, echo=FALSE}
+### Changing steps vs changing fishes 
+
+```{r, echo=FALSE, warning=FALSE}
 # Create a data frame
 fishSteps <- data.frame(
   Num = c(5000, 10000, 15000, 20000, 25000, 5000, 10000, 15000, 20000, 25000),
@@ -142,21 +168,73 @@ fishSteps <- data.frame(
   Category = c(rep("Num_Fish", 5), rep("Num_Steps", 5))
 )
 
+ggplot(df, aes(x = exp2)) +
+  geom_point(aes(y = exp2t, color = "Exp2t"), shape=23, fill="blue", size=2) +
+  geom_line(aes(y = exp2t, color = "Exp2t"), linetype = "solid") +
+  geom_point(aes(y = exp3t, color = "Exp3t"), shape=24, fill="red", size=2) +
+  geom_line(aes(y = exp3t, color = "Exp3t"), linetype = "dashed") +
+  scale_color_manual(values = c("Exp2t" = "blue", "Exp3t" = "red"),
+                     labels = c("Numfish", "Numsteps")) +
+  labs(x = "num", y = "Time(s)") +
+  scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
+```
+
+## Experiment 4 - Thread Scheduling 
+
+### Thread Scheduling Methods
+Experiment 4 investigates the difference in time taken for different scheduling methods and compares them to the base cases for both sequential and parallel. The function `void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int numsteps)` which is implemented in `parallel_functions.c` is an extension of the base case parallel function that implements four different scheduling types.
+
+1. Static: Iterations are divided into equal-sized chunks and each thread gets a chunk of iterations to execute. In this experiment, the chunk size is not specified in the program, therefore, OpenMP divides the iterations into equal parts, and each thread gets num_iterations / num_threads iterations to execute.
+
+2. Dynamic: Iterations are divided into chunks and each thread pulls a chunk to execute once it finishes its current chunk. This scheduling type can help in load balancing when the iteration times are irregular.
+
+3. Guided: The size of the chunks decreases exponentially over time, with an initial large chunk size. Each thread grabs a chunk of decreasing size to execute until all iterations are finished.
+
+4. Runtime: The scheduling type and chunk size are determined by the environment variables or runtime library routines.
+
+Number of threads: 16
+
+Number of steps: 5000, 10000, 15000, 20000, 25000
+
+Number of fish: 10,000
+
+
+```{r, echo=FALSE, warning=FALSE}
+# Arrange the data in ascending order based on the exp4 column
+df <- df %>%
+  filter(!is.na(exp4)) %>%
+  arrange(exp4)
+
 # Create the plot
-ggplot(fishSteps, aes(x = Num, y = Time, color = Category, shape=Category)) +
-  geom_point() +
-  geom_line() +
-  labs(
-    title = "Time vs Number",
-    x = "Number",
-    y = "Time (s)"
-  ) +
+ggplot(data = df, aes(x = factor(exp4), y = exp4t, fill = factor(exp4))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(exp4t, 2)), vjust = -0.5) +  # Add text labels with rounded values
+  labs(x = "Scheduling Type", y = "Time(s)") +
+  scale_fill_discrete() +  # Use different colors for each bar
   theme_minimal()
 ```
 
+### Chunk Size
+TBD
+
+## Experiment 5 - Tasks and Sections
+Experiment 5 investigates the time savings that can be garnered from using different worksharing constructs such as sections and tasks.Three different methods will be compared to the base sequential and parallel cases:
+
+1. `void parallelSections(Fish* fishArray, int numfish, int numsteps)`: This function makes use of sections from OpenMP. Each section can be executed by different threads in parallel but each section will only be executed by one thread.
+
+2. `void parallelTasks(Fish* fishArray, int numfish, int numsteps)`:  This function makes use of tasks from OpenMP. Inside each loop, tasks will be spawned to handle a small portion of the calculation. As this does not make use of the reduction clause, a ` #pragma omp critical` directive needs to be used before modifing any of the shared vairables to prevent race conditions.
+
+3.  `void parallelTaskloop(Fish* fishArray, int numfish, int numsteps)`: This function makes use of `#pragma omp taskloop` directive. The taskloop directive combines the features of the task and for directives, creating a set of tasks that distribute the iterations of the loop across different threads.
 
 
-
+```{r, echo=FALSE, warning=FALSE}
+ggplot(data=subset(df, !is.na(exp5)), aes(x = exp5, y = exp5t, fill = exp5)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(exp5t, 2)), vjust = -0.5) +  # Add text labels with rounded values
+  labs(x = "Scheduling Type", y = "Time(s)") +
+  scale_fill_discrete() +  # Use different colors for each bar
+  theme_minimal()
+```
 
 
 
