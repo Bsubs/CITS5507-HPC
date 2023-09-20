@@ -207,69 +207,54 @@ void parallelTasks(Fish* fishArray, int numfish, int numsteps){
         double maxDiff = 0;
         double sumOfProduct = 0;
         double sumOfDistance = 0;
-        int block_size = 100; 
 
-        // Loops through fish array and finds maxDiff in the current round
         #pragma omp parallel
         {
             #pragma omp single
             {
-                for(int j = 0; j < numfish; j += block_size) {
-                    #pragma omp task
+                #pragma omp task
+                {
+                    double localMaxDiff = 0;
+                    // Loops through fish array and finds maxDiff in the current round
+                    for(int j = 0; j < numfish; j++) {
+                        double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
+                        if(dist > localMaxDiff) { localMaxDiff = dist; }
+                    }
+
+                    #pragma omp critical
                     {
-                        double localMaxDiff = 0;
-                        for(int k = 0; k < block_size && j+k < numfish; ++k) {
-                            double dist = fishArray[j+k].euclDist;
-                            if(dist > localMaxDiff) {localMaxDiff = dist;}
-                        }
-                        #pragma omp critical
-                        {
-                            if(localMaxDiff > maxDiff) {maxDiff = localMaxDiff;}
-                        }
+                        if(localMaxDiff > maxDiff) { maxDiff = localMaxDiff; }
                     }
                 }
-            }
-        
 
-            // Loops through fish array and performs eat & swim operations
-            #pragma omp single
-            {
-                for(int j = 0; j < numfish; j++){
-                    #pragma omp task
-                    {
+                #pragma omp taskwait
+
+                #pragma omp task
+                {
+                    double localSumOfProduct = 0;
+                    double localSumOfDistance = 0;
+
+                    // Loops through fish array and accumulates variables for barycentre
+                    for(int j = 0; j < numfish; j++){
                         eat(&fishArray[j], maxDiff, i);
-
-                    }
-                    #pragma omp task
-                    {
                         swim(&fishArray[j]);
+                        localSumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
+                        localSumOfDistance += fishArray[j].euclDist;
                     }
-                }
-            }
 
-            // Loops through fish array and accumulates variables for barycentre
-            #pragma omp single
-            {
-                for(int j = 0; j < numfish; j += block_size) {
-                    #pragma omp task
+                    #pragma omp critical
                     {
-                        double localSumOfProduct = 0.0;
-                        double localSumOfDistance = 0.0;
-                        for(int k = 0; k < block_size && j+k < numfish; ++k) {
-                            localSumOfProduct += fishArray[j+k].euclDist * fishArray[j+k].weight_p;
-                            localSumOfDistance += fishArray[j+k].euclDist;
-                        }
-                        #pragma omp critical
-                        {
-                            sumOfProduct += localSumOfProduct;
-                            sumOfDistance += localSumOfDistance;
-                        }
+                        sumOfProduct += localSumOfProduct;
+                        sumOfDistance += localSumOfDistance;
                     }
                 }
+
+                #pragma omp taskwait
             }
         }
+
         double barycentre = sumOfProduct / sumOfDistance;
-    }  
+    }
 }
 
 /**

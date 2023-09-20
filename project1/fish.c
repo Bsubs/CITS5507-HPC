@@ -74,7 +74,8 @@ void clamp(double* value, double min, double max) {
  */
 void eat(Fish* fish1, double maxObj, int step){
     if (step == 0) {
-        fish1->weight_c = STARTWEIGHT;
+        double random_weight = ((double)rand() / (double)(RAND_MAX)) * 2.0 - 1.0;
+        fish1->weight_c = STARTWEIGHT + random_weight;
     }
     else {
         double weight = fish1->weight_c;
