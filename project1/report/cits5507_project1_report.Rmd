@@ -63,6 +63,8 @@ The experiments make use of functions declared in `sequential.h` and `parallel_f
 
 Each experiment was ran 10 times and the results shown are an average of those 10 simulations. 
 
+NUMSTEPS and NUMFISH are not defined using C preprocessor definitions for the ease of testing using different values of each. 
+
 ## Base Case - Sequential 
 The base case for this simulation was implemented using the `void sequential(Fish* fishArray, int numfish, int numsteps)` function implemented in `sequential.c`. The FSB problem was tackled as such: 
 

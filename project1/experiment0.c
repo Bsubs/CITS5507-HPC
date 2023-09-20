@@ -9,9 +9,9 @@
 #include "parallel_functions.h"
 
 /**
- * This will investigate the results of changing the number of threads on performance
+ * This will investigate the impact of removing implicit barriers on parallel performance
  * Average time will be taken over 10 runs
- * Threads: 1 , 2, 4, 8, 16, 32
+ * Threads: 4
  * Num steps: 10,000
  * Num fish:  10,000
 */

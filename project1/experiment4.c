@@ -9,7 +9,7 @@
 #include "parallel_functions.h"
 
 /**
- * This will investigate the results of changing the number of steps on performance
+ * This will investigate the results of changing the schedule type on performance
  * Average time will be taken over 10 runs
  * Threads: 16
  * Num steps: 10,000
