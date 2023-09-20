@@ -10,6 +10,6 @@ module load gcc
 
 gcc -o experiment4 experiment4.c fish.c sequential.c parallel_functions.c -fopenmp -lm
 
-export OMP_NUM_THREADS=16 
+export OMP_NUM_THREADS=4
 
 srun ./experiment4

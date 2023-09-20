@@ -10,7 +10,7 @@
  * This is the base case
  * Input: Fish* fishArray
 */
-void parallelReduction(Fish* fishArray, int numfish, int numsteps){
+void parallelReductionOld(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;
@@ -44,6 +44,40 @@ void parallelReduction(Fish* fishArray, int numfish, int numsteps){
 }
 
 /**
+ * Function to implement parallelisation using reduction
+ * This is the base case
+ * Input: Fish* fishArray
+*/
+void parallelReduction(Fish* fishArray, int numfish, int numsteps){
+    for(int i = 0; i < numsteps; i++){
+        double maxDiff = 0;
+        double sumOfProduct = 0;
+        double sumOfDistance = 0;
+
+        #pragma omp parallel
+        {
+            // Loops through fish array and finds maxDiff in the current round
+            #pragma omp for reduction(max:maxDiff)
+            for(int j = 0; j < numfish; j++) {
+                double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
+                if(dist > maxDiff) {maxDiff = dist;}
+            }
+
+            // Loops through fish array and accumulates variables for barycentre
+            #pragma omp for reduction(+:sumOfProduct,sumOfDistance)
+            for(int j = 0; j < numfish; j++){
+                eat(&fishArray[j], maxDiff, i);
+                swim(&fishArray[j]);
+                sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
+                sumOfDistance += fishArray[j].euclDist;
+            }
+        }
+
+        double barycentre = sumOfProduct / sumOfDistance;
+    }  
+}
+
+/**
  * Function to experiment with different scheduling types
  * Input: Fish* fishArray
  * Input: char* scheduleType
@@ -63,14 +97,10 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
-                #pragma omp for schedule(static)
+                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(static)
                 for(int j = 0; j < numfish; j++){
                     eat(&fishArray[j], maxDiff, i);
                     swim(&fishArray[j]);
-                }
-
-                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(static)
-                for(int j = 0; j < numfish; j++){
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
                 }
@@ -84,14 +114,10 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
-                #pragma omp for schedule(dynamic)
+                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(dynamic)
                 for(int j = 0; j < numfish; j++){
                     eat(&fishArray[j], maxDiff, i);
                     swim(&fishArray[j]);
-                }
-
-                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(dynamic)
-                for(int j = 0; j < numfish; j++){
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
                 }
@@ -105,14 +131,10 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
-                #pragma omp for schedule(guided)
+                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(guided)
                 for(int j = 0; j < numfish; j++){
                     eat(&fishArray[j], maxDiff, i);
                     swim(&fishArray[j]);
-                }
-
-                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(guided)
-                for(int j = 0; j < numfish; j++){
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
                 }
@@ -126,22 +148,15 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
                     if(dist > maxDiff) {maxDiff = dist;}
                 }
 
-                #pragma omp for schedule(runtime)
+                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(runtime)
                 for(int j = 0; j < numfish; j++){
                     eat(&fishArray[j], maxDiff, i);
                     swim(&fishArray[j]);
-                }
-
-                #pragma omp for reduction(+ : sumOfProduct, sumOfDistance) schedule(runtime)
-                for(int j = 0; j < numfish; j++){
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
                 }
             }
         }
-
-
-
         double barycentre = sumOfProduct / sumOfDistance;
     }   
 }
@@ -169,19 +184,11 @@ void parallelTaskloop(Fish* fishArray, int numfish, int numsteps){
 
             #pragma omp single
             {
-                // Loops through fish array and performs eat & swim operations
-                #pragma omp taskloop
-                for(int j = 0; j < numfish; j++){
-                    eat(&fishArray[j], maxDiff, i);
-                    swim(&fishArray[j]);
-                }
-            }
-
-            #pragma omp single
-            {
                 // Loops through fish array and accumulates variables for barycentre
                 #pragma omp taskloop reduction(+:sumOfProduct,sumOfDistance)
                 for(int j = 0; j < numfish; j++){
+                    eat(&fishArray[j], maxDiff, i);
+                    swim(&fishArray[j]);
                     sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                     sumOfDistance += fishArray[j].euclDist;
                 }
@@ -281,7 +288,7 @@ void parallelSections(Fish* fishArray, int numfish, int numsteps){
             {
                 #pragma omp section
                 {
-                    #pragma omp parallel for reduction(max:maxDiff) schedule(dynamic)
+                    #pragma omp parallel for reduction(max:maxDiff) 
                     for(int j = 0; j < numfish; j++) {
                         double dist = distance(fishArray[j].x_c, fishArray[j].y_c) - fishArray[j].euclDist;
                         if(dist > maxDiff) { maxDiff = dist; }
@@ -290,17 +297,10 @@ void parallelSections(Fish* fishArray, int numfish, int numsteps){
 
                 #pragma omp section
                 {
-                    #pragma omp parallel for schedule(dynamic)
+                    #pragma omp parallel for reduction(+:sumOfProduct,sumOfDistance) 
                     for(int j = 0; j < numfish; j++){
                         eat(&fishArray[j], maxDiff, i);
                         swim(&fishArray[j]);
-                    }
-                }
-
-                #pragma omp section
-                {
-                    #pragma omp parallel for reduction(+:sumOfProduct,sumOfDistance) schedule(dynamic)
-                    for(int j = 0; j < numfish; j++){
                         sumOfProduct += fishArray[j].euclDist * fishArray[j].weight_p;
                         sumOfDistance += fishArray[j].euclDist;
                     }
