@@ -7,29 +7,34 @@ output:
     number_sections: true
 ---
 
-```{r setup, include=FALSE, warning=FALSE}
+```{r setup, include=FALSE, warning=FALSE, message=FALSE, results='hide'}
 knitr::opts_chunk$set(echo = TRUE)
 
 ```
-```{r, echo=FALSE}
+```{r, include=FALSE, warning=FALSE, message=FALSE, results='hide', echo=FALSE}
 library(ggplot2)
 library(dplyr)
 library(readxl)
+library(tidyverse)
 ```
 ```{r, echo=FALSE}
 df <- read_excel("data.xlsx")
+df2 <- read_excel(("data2.xlsx"))
 ```
 
 # Project Overview
-This project aims to test various sequential and parallel implementations of the Fish School Behaviour (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the code.
+This project aims to test various sequential and parallel implementations of the Fish School Behavior (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the code given a number of fish and steps.
 
 # Fish simulation
+
+## Fish Structure
 The file fish.h contains the definition of a fish in this simulation. The struct Fish contains the following parameters:
-1. double euclDist: This is the euclidean distance of the fish from the origin in the previous step
-2. double x_c: This holds the x coordinate of the fish in the current step
-3. double y_c: This holds the y coordinate of the fish in the current step
-4. double weight_c: This holds the weight of the fish in the current step
-5. double weight_p: This holds the weight of the fish in the previous step
+
+- **double euclDist**: This is the euclidean distance of the fish from the origin in the previous step
+- **double x_c**: This holds the x coordinate of the fish in the current step
+- **double y_c**: This holds the y coordinate of the fish in the current step
+- **double weight_c**: This holds the weight of the fish in the current step
+- **double weight_p**: This holds the weight of the fish in the previous step
 
 ```{}
 typedef struct fish {
@@ -41,25 +46,31 @@ typedef struct fish {
 } Fish;
 ```
 
+## Fish methods
 fish.h also contains declarations for functions that are implemented in fish.c 
 
-This function dynamically allocates memory in the heap for an array of Fish structures and initializes each fish with random coordinates within a 200 x 200 square. The parameter numfish allows the user to specify the size of the array.
+This function dynamically allocates memory in the heap for an array of Fish structures and initializes each fish with random coordinates within a 200x200 square which represents the pond. The parameter `numfish` is used to specify the number of fish instead of a `#define NUMFISH` C preprocessor constant to allow for experiments with different numbers of fish.
 ```{}
 Fish* initializeFish(int numfish)
 ```
 
-This function simulates a fish eating in the current step. The weight of the fish is bounded between 0 and 2w.
+This function updates the weight of a fish during a simulation step. It takes 3 parameters:
+
+- **Fish* fish1**: A pointer to the fish that will be updated
+- **double maxObj**: This is the maximum difference in distance between the previous step and the current step
+- **int step**: The current step of the function
+
 ```{}
 void eat(Fish* fish1, double maxObj, int step)
 ```
 
-This function simulates a fish swimming in the current step. 
+This function updates the position of a fish instance if its current weight is less than two times the STARTWEIGHT. The new position is calculated randomly within -0.1 and 0.1 and is then clamped to ensure it remains within a 200 x 200 square.
 ```{}
 void swim(Fish* fish1)
 ```
 
-# Experiments
-The experiments make use of functions declared in `sequential.h` and `parallel_functions.h`. Each experiment has its corresponding `experimentX.c` and `experimentX.sh` files. To run an experiment, SSH into Setonix and use the command: `sbatch experimentX.sh` to run he desired experiment. 
+# Experiment Methodology 
+The experiments make use of functions declared in `sequential.h` and `parallel_functions.h`. Each experiment has its corresponding `experimentX.c` and `experimentX.sh` files. To run an experiment, SSH into Setonix and use the command: `sbatch experimentX.sh` to run the desired experiment. The reason for using this method of breaking up the experiments is due to the limits of computation time imposed by Setonix.
 
 Each experiment was ran 10 times and the results shown are an average of those 10 simulations. 
 
@@ -87,21 +98,57 @@ The base case for parallel functions in this simulation is the `void parallelRed
 
 3. The last inner loop is also parallelized using `#pragma omp for reduction(+:sumOfProduct,sumOfDistance)` to avoid race conditions when updating the two variables. 
 
-## Experiment 1 - Time taken as number of threads increase
-Experiment 1 investigates the effect of changing the number of threads on the time take for computation. This experiment makes use of the base case functions for both sequential and parallel. The number of steps and fish are held constant and the only variable changed is the number of threads as defined by setting the environment variable `OMP_NUM_THREADS`.  
+# Experiment 0
 
-Number of threads: 1, 2, 4, 8, 16, 32, 64
+Given the base cases of the project as described in sections 3.1 and 3.2, it was pointed out that they might suffer a significant performance penalty for the parallel code especially as the number of threads increased. A discussion in the lab indicated that the contents of the loops from steps 3 and 4 could be combined. Removing one of the inner loops would remove the associated parallel region and the implicit barrier that comes with it, thus giving the parallel code a boost in performance. Experiment 0 sought to find out how much a performance gain would be achieved from removing one of the inner loops and the associated parallel regions. The following functions, found in `sequential.c` and `parallel_functions.c` were used in this experiment:
 
-Number of steps: 10,000
+1. `void sequential(Fish* fishArray, int numfish, int numsteps)`: The updated version of the sequential code with 2 inner loops
 
-Number of fish: 10,000
+2. `void sequentialOld(Fish* fishArray, int numfish, int numsteps)`: The original version of the sequential code with 3 inner loops 
+
+3. `void parallelReduction(Fish* fishArray, int numfish, int numsteps)`: The updated version of the parallel code with 2 inner loops and parallel regions
+ 
+4. `void parallelReduction(Fish* fishArray, int numfish, int numsteps)`: The original version of the parallel code with 3 inner loops and parallel regions
+
+The results of this experiment were unexpected. The `sequentialOld` with three inner loops outperforms the updated `sequential` function with 2 inner loops consistently. A reason for this might be the way the loops access memory. Accessing memory in a sequential manner is faster than accessing it in a random manner because of cache locality. The `sequentialOld` function, each loop accesses a smaller subset of Fish properties, which could lead to better cache locality.
+
+Similarly, the parallel code also exhibits a performance difference between the new and old code, however, this difference is not as stark as compared to the sequential code. It appears that the removal of implicit barriers by the removal of one parallel region does have a performance benefit but it is not enough to outweigh the memory inefficiencies from condensing 3 loops into 2.
+
+As a result, the code for the remainder of the experiments will make use of `void sequentialOld` as the base case. Any subsequent modification to these loops (as seen in experiments 4 & 5) will make use of the base case as specified in section 3.2. 
+
+```{r, echo=FALSE, warning=FALSE}
+# Arrange the data in ascending order based on the exp4 column
+experiment0 <- df %>%
+  filter(!is.na(exp0))
+
+# Create the plot
+ggplot(data = experiment0, aes(x = factor(exp0), y = exp0t, fill = factor(exp0))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(exp0t, 2)), vjust = -0.5) +  # Add text labels with rounded values
+  labs(x = "Function", y = "Time(s)") +
+  scale_fill_discrete() +  # Use different colors for each bar
+  theme_minimal()
+```
+
+# Experiment 1 - Time taken as number of threads increase
+Experiment 1 investigates the effect of changing the number of threads on the time take for computation. This experiment makes use of the base case functions for both sequential and parallel as described in sections 3.1 and 3.2. The number of steps and fish are held constant and the only variable changed is the number of threads as defined by setting the environment variable `OMP_NUM_THREADS`.  
+
+- Source file: `experiment1.c`
+- Run with: `sbatch experiment1.sh`
+- Number of threads: 1, 2, 4, 8, 16, 32, 64
+- Number of steps: 10,000
+- Number of fish: 10,000
+
+The graph below shows the results of the experiment. It can be observed that the increase in time as the number of threads increase is exponential. One possible conclusion that can be drawn from this is that the overhead introduced by parallelization which includes thread creation and synchronization outweighs the benefits that parallel computing provides in this case. As the computation done in each of the inner loops is very small, as the number of threads increase, the overhead from handling all those threads vastly outstrips the performance gains from parallelization. This is why we see the exponential growth in time taken as the number of threads increase.
+
+Future experiments will be run with 4 threads as with higher number of threads, it would not be easy to determine if any performance penalties come from having too many threads or from the additional constructs being tested. 
 
 ```{r, echo=FALSE, warning=FALSE}
 # Create the plot
 ggplot(df, aes(x = exp1, y = exp1t)) +
   geom_point() +
   geom_line() +
-  scale_x_log10(breaks = c(1, 2, 4, 8, 16, 32)) +
+  scale_x_log10(breaks = c(1, 2, 4, 8, 16, 32, 64)) +
   labs(
     title = "Time vs Number of Threads",
     x = "Number of Threads",
@@ -110,14 +157,14 @@ ggplot(df, aes(x = exp1, y = exp1t)) +
   theme_minimal()
 ```
 
-## Experiment 2 - Investigating time vs number of fish
-Experiment 2 investigates the increase in time taken as the number of fish increases. This experiment makes use of the base case functions for both sequential and parallel. The number of steps and threads are held constant and the only variable changed is the number of fish.  
+# Experiment 2 - Investigating time vs number of fish
+Experiment 2 investigates the increase in time taken as the number of fish increases. This experiment makes use of the base case parallel function. The number of steps and threads are held constant and the only variable changed is the number of fish.  
 
-Number of threads: 16
-
-Number of steps: 10,000
-
-Number of fish: 5000, 10000, 15000, 20000, 25000
+- Source file: `experiment2.c`
+- Run with: `sbatch experiment2.sh`
+- Number of threads: 4
+- Number of steps: 10,000
+- Number of fish: 5000, 10000, 15000, 20000, 25000
 
 The plot below shows the increase in time as the number of fish increases is linear. 
 
@@ -135,16 +182,17 @@ ggplot(df, aes(x = exp2, y = exp2t)) +
   theme_minimal()+
   scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
-## Experiment 3 - Comparing Steps and Fishes
-Experiment 3 investigates the increase in time taken as the number of steps increases. This experiment makes use of the base case functions for both sequential and parallel. The number of fish and threads are held constant and the only variable changed is the number of steps.  
+# Experiment 3 - Comparing Steps and Fishes
+Experiment 3 investigates the increase in time taken as the number of steps increases. This experiment makes use of the base case functions parallel function. The number of fish and threads are held constant and the only variable changed is the number of steps.  
 
-Number of threads: 16
+- Source file: `experiment3.c`
+- Run with: `sbatch experiment3.sh`
+- Number of threads: 4
+- Number of steps: 5000, 10000, 15000, 20000, 25000
+- Number of fish: 10,000
 
-Number of steps: 5000, 10000, 15000, 20000, 25000
+The plot below shows that the initial gradient is steep, the rate of increase in time taken slows down as the number of steps increase. 
 
-Number of fish: 10,000
-
-The plot below shows that the increase in time as the number of steps increases is also linear.
 ```{r, echo=FALSE, warning=FALSE}
 
 # Step 3: Create the plot
@@ -160,7 +208,11 @@ ggplot(df, aes(x = exp3, y = exp3t)) +
   scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
 
-### Changing steps vs changing fishes 
+## Changing steps vs changing fishes 
+
+The following graph shows the results for experiments 2 and 3 overlayed on top of each other. It can be observed that from 5000->20000 steps and fishes, the increase in time taken is identical. However, the difference in time starts to be seen from 20000->100000 where the growth in time from increasing the number of fish starts to rapidly outpace the growth in time from increasing the number of fish. 
+
+This behavior is also something unexpected as the time complexity of the program is **O(numsteps * numfish)**. By this complexity reasoning, we expect the function's time taken to scale linearly as observed in the relationship between time taken and numfish. However, this relationship does not hold true when varying numsteps, which mean that there might be other factors such as hardware or memory limitations. 
 
 ```{r, echo=FALSE, warning=FALSE}
 # Create a data frame
@@ -178,37 +230,50 @@ ggplot(df, aes(x = exp2)) +
   scale_color_manual(values = c("Exp2t" = "blue", "Exp3t" = "red"),
                      labels = c("Numfish", "Numsteps")) +
   labs(x = "num", y = "Time(s)") +
-  scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
+  scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) +
+  theme_minimal()
 ```
 
-## Experiment 4 - Thread Scheduling 
+# Experiment 4 - Thread Scheduling 
 
-### Thread Scheduling Methods
+## Thread Scheduling Methods
 Experiment 4 investigates the difference in time taken for different scheduling methods and compares them to the base cases for both sequential and parallel. The function `void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int numsteps)` which is implemented in `parallel_functions.c` is an extension of the base case parallel function that implements four different scheduling types.
 
-1. Static: Iterations are divided into equal-sized chunks and each thread gets a chunk of iterations to execute. In this experiment, the chunk size is not specified in the program, therefore, OpenMP divides the iterations into equal parts, and each thread gets num_iterations / num_threads iterations to execute.
+1. **Static**: Iterations are divided into equal-sized chunks and each thread gets a chunk of iterations to execute. In this experiment, the chunk size is not specified in the program, therefore, OpenMP divides the iterations into equal parts, and each thread gets num_iterations / num_threads iterations to execute.
 
-2. Dynamic: Iterations are divided into chunks and each thread pulls a chunk to execute once it finishes its current chunk. This scheduling type can help in load balancing when the iteration times are irregular.
+2. **Dynamic**: Dynamic scheduling assigns a chunk of iterations to a thread, and once the thread is finished, it retrieves the next chunk to process. This can help balance the workload if the time to process each iteration can vary.
 
-3. Guided: The size of the chunks decreases exponentially over time, with an initial large chunk size. Each thread grabs a chunk of decreasing size to execute until all iterations are finished.
+3. **Guided**: Guided scheduling is a variation of dynamic scheduling where the chunk sizes decrease exponentially. Early on, threads get larger chunks, and as they finish, they get smaller chunks. This can help in situations where there's a lot of variation in workload, as threads that finish early can take on more work.
 
-4. Runtime: The scheduling type and chunk size are determined by the environment variables or runtime library routines.
+4. **Runtime**: The scheduling type and chunk size are determined by the environment variables or runtime library routines.
 
-Number of threads: 16
+- Source file: `experiment4.c`
+- Run with: `sbatch experiment4.sh`
+- Number of threads: 4
+- Number of steps: 10,000
+- Number of fish: 10,000
 
-Number of steps: 5000, 10000, 15000, 20000, 25000
+The chart below shows the results of the different thread scheduling methods sorted in descending order. These are some observations about the data collected:
 
-Number of fish: 10,000
+1. **Static**: Given that the workload is fairly consistent across iterations of the loop, static scheduling is the fastest among the various thread scheduling methods tested as it does not incur any of the overhead of dynamically managing threads. For this number of threads, using the static scheudling method outperforms the base parallel case. 
+
+2. **Guided**: Guided scheduling is very close in performance to static scheduling which indicates that it adapts fairly well to the workload in the FSB simulation.
+
+3. **Dynamic**: Given that the performance of dynamic scheduling is significantly worse than static and guided, it suggests that the overhead of managing the dynamic assignment of chunks outweighs the benefits of potentially more balanced workloads especially in this FSB simulation where the workload across the various iterations of the loop does not vary much.
+
+4. **Runtime**: Runtime scheduling defers the decision of which schedule type to use until runtime. The scheduling type is set by an environment variable. Since it's the slowest, it could be because the environment's default choice isn't optimal for this specific workload, or there might be additional overheads involved in determining the schedule at runtime.
 
 
 ```{r, echo=FALSE, warning=FALSE}
-# Arrange the data in ascending order based on the exp4 column
-df <- df %>%
-  filter(!is.na(exp4)) %>%
-  arrange(exp4)
-
 # Create the plot
-ggplot(data = df, aes(x = factor(exp4), y = exp4t, fill = factor(exp4))) +
+experiment4 <- df %>%
+  select(exp4, exp4t) %>%  # select the columns you want
+  arrange(desc(exp4t))
+
+# Convert exp4 to a factor where the levels are set based on the descending order of exp4t
+experiment4$exp4 <- factor(experiment4$exp4, levels = unique(experiment4$exp4))
+
+ggplot(data=subset(experiment4, !is.na(exp4)), aes(x = exp4, y = exp4t, fill = exp4)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = round(exp4t, 2)), vjust = -0.5) +  # Add text labels with rounded values
   labs(x = "Scheduling Type", y = "Time(s)") +
@@ -216,31 +281,118 @@ ggplot(data = df, aes(x = factor(exp4), y = exp4t, fill = factor(exp4))) +
   theme_minimal()
 ```
 
-### Chunk Size
-TBD
+## Different scheduling methods across multiple threads
 
-## Experiment 5 - Tasks and Sections
-Experiment 5 investigates the time savings that can be garnered from using different worksharing constructs such as sections and tasks.Three different methods will be compared to the base sequential and parallel cases:
+A sub-experiment was conducted after reviewing the results of experiment 4. In experiment 4b, the same scheduling methods were tested with different number of threads to determine if the conclusions drawn remain the same as the number of threads increase. This was achieved by modifying the `export OMP_NUM_THREADS` in `experiment4.sh`.
 
-1. `void parallelSections(Fish* fishArray, int numfish, int numsteps)`: This function makes use of sections from OpenMP. Each section can be executed by different threads in parallel but each section will only be executed by one thread.
+- Source file: `experiment4.c`
+- Run with: `sbatch experiment4.sh`
+- Number of threads: 4, 8, 16, 32, 64
+- Number of steps: 10,000
+- Number of fish: 10,000
 
-2. `void parallelTasks(Fish* fishArray, int numfish, int numsteps)`:  This function makes use of tasks from OpenMP. Inside each loop, tasks will be spawned to handle a small portion of the calculation. As this does not make use of the reduction clause, a ` #pragma omp critical` directive needs to be used before modifing any of the shared vairables to prevent race conditions.
+The graph below plots the time taken for each scheduling method as the number of threads increase. The following observations can be drawn from the data:
 
-3.  `void parallelTaskloop(Fish* fishArray, int numfish, int numsteps)`: This function makes use of `#pragma omp taskloop` directive. The taskloop directive combines the features of the task and for directives, creating a set of tasks that distribute the iterations of the loop across different threads.
+1. The values for **Dynamic** and **Runtime** are consistently similar as the number of threads increase and do not diverge like the other 3 scheduling methods tested. given this pattern, the scheduling method selected at runtime in Setonix is very possibly dynamic which is what results in the very similar behaviors in both graphs. 
 
+2. **Static**: While this was the best performer at 4 threads, performance slightly degrades as the number of threads increases. This could be due to overheads from managing more threads, or the fact that the iterations might not be divided evenly among threads as their number increases, leading to some threads sitting idle while others are still working.
+
+3. **Guided**: This method performed very similarly to static and parallel_base from 4 to 16 threads, however, past that point it is observed that the performance of the guided scheduling type degrades rapidly as the number of threads increase. The overheads associated with adapting the chunk size dynamically increase with more threads which could explain this rapid increase in time taken. 
+
+4. The parallel base outperforms all the other methods at higher thread counts as it does not need to deal with the overhead of managing the different schedules for a large number of threads.
 
 ```{r, echo=FALSE, warning=FALSE}
-ggplot(data=subset(df, !is.na(exp5)), aes(x = exp5, y = exp5t, fill = exp5)) +
+# Convert the data to long format
+df2_long <- df2 %>%
+  pivot_longer(cols = -c("Threads", "Taskloop", "Tasks", "Sections"), names_to = "Variable", values_to = "Value")
+
+# Plot the data using ggplot
+ggplot(data = df2_long, aes(x = Threads, y = Value, color = Variable, shape = Variable)) +
+  geom_point(size = 3) +
+  geom_line() +
+  scale_x_continuous(trans = 'log2') + 
+  theme_minimal() +
+  labs(title = "Performance by Scheduling Type", x = "Num Threads", y = "Time(s)")
+```
+
+
+# Experiment 5 - Tasks and Sections
+Experiment 5 investigates the time savings that can be garnered from using different worksharing constructs such as sections and tasks. Three different methods will be compared to the base sequential and parallel cases:
+
+1. `void parallelSections(Fish* fishArray, int numfish, int numsteps)`: This function makes use of sections from OpenMP.  The sections construct is used to define multiple independent blocks of code that can be executed in parallel.
+
+2. `void parallelTasks(Fish* fishArray, int numfish, int numsteps)`:  This function makes use of tasks from OpenMP. Inside each loop, tasks will be dynamically generated at runtime to handle a small portion of the calculation. As this does not make use of the reduction clause, a ` #pragma omp critical` directive needs to be used before modifying any of the shared variables to prevent race conditions.
+
+3.  `void parallelTaskloop(Fish* fishArray, int numfish, int numsteps)`: This function makes use of `#pragma omp taskloop` directive. The taskloop directive combines the concept of tasks and loops by creating tasks for each iteration of a loop. This means that each iteration can potentially run as a separate task, which allows for better load balancing especially when the iterations have varying execution times.
+
+- Source file: `experiment5.c`
+- Run with: `sbatch experiment5.sh`
+- Number of threads: 4
+- Number of steps: 10,000
+- Number of fish: 10,000
+
+The chart below shows the results of the different worksharing constructs sorted in descending order. These are some observations about the data collected:
+
+1. At 4 threads, none of the worksharing constructs outperform the base parallel case. 
+
+2. **Tasks** and **Sections** performed similarly and were noticably slower than taskloop. This suggests that the overhead from using either of these constructs is not worthwhile for such a small amount of threads.
+
+```{r, echo=FALSE, warning=FALSE}
+# Create the plot
+experiment5 <- df %>%
+  select(exp5, exp5t) %>%  # select the columns you want
+  arrange(desc(exp5t))
+
+# Convert exp4 to a factor where the levels are set based on the descending order of exp4t
+experiment5$exp5 <- factor(experiment5$exp5, levels = unique(experiment5$exp5))
+
+ggplot(data=subset(experiment5, !is.na(exp5)), aes(x = exp5, y = exp5t, fill = exp5)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = round(exp5t, 2)), vjust = -0.5) +  # Add text labels with rounded values
-  labs(x = "Scheduling Type", y = "Time(s)") +
+  labs(x = "Construct Type", y = "Time(s)") +
   scale_fill_discrete() +  # Use different colors for each bar
   theme_minimal()
 ```
 
+## Tasks and Sections across multiple threads
 
+Similar to experiment 4, a sub-experiment was conducted to compare the performance of the different worksharing constructs as the number of threads increased. In experiment 5b, the same scheduling methods were tested with different number of threads to determine if the conclusions drawn remain the same as the number of threads increase. This was achieved by modifying the `export OMP_NUM_THREADS` in `experiment5.sh`.
 
+- Source file: `experiment5.c`
+- Run with: `sbatch experiment5.sh`
+- Number of threads: 4
+- Number of steps: 10,000
+- Number of fish: 10,000
 
+1. **Taskloop**: Taskloop execution time gradually increases with the number of threads. While the difference between 4 and 8 threads is minimal, the time continues to increase more significantly as the thread count grows.
+
+2. **Tasks**: The Tasks construct has a more pronounced increase in execution time as the thread count rises. The overhead of managing individual tasks seems to become quite significant, especially as the number of threads increases, as evident from the steeper rise in times from 32 to 64 threads.
+
+3. **Sections**: While this construct performed the worse at 4 threads, it shows a more consistent and gradual increase in time with a rising thread count. Interestingly, the time taken for 8 threads is a tiny bit less than that for 4 threads, which could be within the margin of error or might indicate that the sections are more effectively utilized with 8 threads.
+
+```{r, echo=FALSE, warning=FALSE}
+# Convert the data to long format
+df2_long_2 <- df2 %>%
+  pivot_longer(cols = -c("Threads", "Static", "Dynamic", "Guided", "Runtime"), names_to = "Variable", values_to = "Value")
+
+# Plot the data using ggplot
+ggplot(data = df2_long_2, aes(x = Threads, y = Value, color = Variable, shape = Variable)) +
+  geom_point(size = 3) +
+  geom_line() +
+  scale_x_continuous(trans = 'log2') + 
+  theme_minimal() +
+  labs(title = "Performance by Construct", x = "Num Threads", y = "Time(s)")
+```
+
+# Conclusion
+
+When considering the results of Experiments 0 to 5, it can be concluded that the sequential code is the best solution to this version of the FSB algorithm. However, a consistent theme throughout these experiments is that the work done in the loops is not sufficient to justify the benefits of parallelization. It should be noted that the algorithm implemented is a heavily simplified version of the actual FSB algorithm which lacks components such as running the collective-instinctive movement operator and collective-volitive movement operator. The inclusion of these and other missing components would greatly increase the work done in each step. If the work in each iteration is sufficient, the algorithm would benefit from the implementation of parallelization..
+
+If it was determined that the code would benefit from parallelization, the following could be implemented to further boost performance:
+
+1. Use the **static** scheduling type to increase performance
+
+2. Use **taskloop** if the number of threads is small and **sections** if the number of threads is large.
 
 
 
