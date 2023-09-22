@@ -6,10 +6,17 @@
 #include "parallel_functions.h"
 
 /**
- * Function to implement parallelisation using reduction
- * This is the base case
- * Input: Fish* fishArray
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelReductionOld makes use of three inner loops in the calculation and has the best 
+ * performance. The reduction operator is used to avoid race conditions.
+ * 
+ * This function serves as the base case for parallel functions.
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelReductionOld(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -44,10 +51,15 @@ void parallelReductionOld(Fish* fishArray, int numfish, int numsteps){
 }
 
 /**
- * Function to implement parallelisation using reduction
- * This is the base case
- * Input: Fish* fishArray
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelReduction makes use of two inner loops in the calculation to remove implicit barriers
+ * from parallel regions. It has worse peformance than parallelReductionOld.
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelReduction(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -78,10 +90,16 @@ void parallelReduction(Fish* fishArray, int numfish, int numsteps){
 }
 
 /**
- * Function to experiment with different scheduling types
- * Input: Fish* fishArray
- * Input: char* scheduleType
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelSchedule is built on parallelReductionOld and is used to experiment with different
+ * scheduling methods.
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param scheduleType Choose between STATIC, DYNAMIC, GUIDED, RUNTIME
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -181,8 +199,15 @@ void parallelSchedule(Fish* fishArray, char* scheduleType, int numfish, int nums
 }
 
 /**
- * Function to implement parallelisation using taskloop
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelSchedule is built on parallelReductionOld and is used to experiment using Taskloop
+ * to parallelize the innerloops
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelTaskloop(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -227,8 +252,15 @@ void parallelTaskloop(Fish* fishArray, int numfish, int numsteps){
 }
 
 /**
- * Function to implement parallelisation using tasks for all loops
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelSchedule is built on parallelReductionOld and is used to experiment using Tasks
+ * to parallelize the innerloops
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelTasks(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -300,8 +332,15 @@ void parallelTasks(Fish* fishArray, int numfish, int numsteps){
 }
 
 /**
- * Implemented using sections
-*/
+ * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
+ * 
+ * The function parallelSchedule is built on parallelReductionOld and is used to experiment using Sections
+ * to parallelize the innerloops
+ *
+ * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
+ * @param numfish An integer representing the number of fishes in fishArray.
+ * @param numsteps An integer representing the number of simulation steps to be performed.
+ */
 void parallelSections(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
@@ -343,6 +382,5 @@ void parallelSections(Fish* fishArray, int numfish, int numsteps){
         }
 
         double barycentre = sumOfProduct / sumOfDistance;
-        // Use or remove barycentre variable as necessary
     }  
 }

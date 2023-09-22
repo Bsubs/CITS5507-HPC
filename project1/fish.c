@@ -99,7 +99,7 @@ void eat(Fish* fish1, double maxObj, int step){
  *
  * This function updates the position of a fish instance if its current weight is 
  * less than two times the STARTWEIGHT. The new position is calculated randomly 
- * within certain bounds and is then clamped to ensure it remains within a 
+ * within -0.1 and 0.1 and is then clamped to ensure it remains within a 
  * 200 x 200 square.
  *
  * @param fish1 Pointer to the Fish instance whose position is to be updated.
