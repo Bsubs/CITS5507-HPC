@@ -20,9 +20,6 @@ Fish* initializeFish(int numfish){
         exit(1); 
     }
 
-    // Allocate the initial positions between -100 and 100
-    // Allocate initial weight 1
-    // We can probably parallelize this or not probably not required
     for(int i = 0; i < numfish; i++){
         fishArray[i].x_c = ((double)rand() / RAND_MAX) * 200.0 - 100.0;
         fishArray[i].y_c = ((double)rand() / RAND_MAX) * 200.0 - 100.0;
