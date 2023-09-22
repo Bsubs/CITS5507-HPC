@@ -1,68 +1,52 @@
 # CITS5507 Project 1 
 
-## File structure
-- main.c
-- fish.h
-    - header file containing the Fish struct 
-    - contains the functions to interact with Fish
-- fish.c
-    - implementation of functions declared in fish.h
+## Functions
 
-- sequential.c
-    - sequential version of the loops
+- Fish Simulation
+    - fish.h: Header file containing definiton of Fish structure and fish functions 
+    - fish.c: Implementation of functions to manipulate the Fish structure
 
-- omp_parallel_for.c
-    - Parallel version of the loops implemented using reduction
+- Sequential Functions
+    - sequential.h: Declaration of the two sequential functions tested
+    - sequential.c: Implementation of the two sequential functions tested
 
-## Login to setonix
-ssh -Y jookaitay@setonix.pawsey.org.au
+- Parallel Functions
+    - parallel_functions.h: Declaration of the six parallel functions tested
+    - parallel_functions.c: Implementation of the six parallel functions tested
 
-## Transferring files to setonix
-scp * jookaitay@setonix.pawsey.org.au:
-rm -f .*
+## Experiments
 
-## Running the program
-sbatch sequential.sh
+The results and analysis of each of the following experiments can be found in the report. To run any of the following experiments, SSH into Setonix and follow the commands listed below:
 
-## Project ideas
-- Use parallel for reduction
-- Change number of fish /steps
-    - 10,000 / 10,000
-        - Sequential: 12.838577s
-        - Parallel: 12.823821s
-    - 100,000 / 10,000
-        - Sequential: 128.361821
-        - Parallel: 128.003554s
-    - 200,000 / 10,000
-        - Sequential: 257.536186s
-        - Parallel: 255.538548s
-    - 10,000 / 100,000
-        - Sequential: 127.602913s
-        - Parallel: 127.259265s
-    - 10,000 / 200,000 
-        - Sequential: 260.593139s
-        - Parallel: 261.114517s
-- Tasks? 
-- change number of threads
-    - 16 threads:
-        - Sequential: 12.838577s
-        - Parallel: 12.823821s
-    - 8 threads:
-        - Sequential: 12.809720s
-        - Parallel: 12.818975s
-    - 4 threads:
-        - Sequential: 12.899041s
-        - Parallel: 12.788475s 
-- schedule clause: static, dynamic, guided
-Total time for sequential elapsed:  12.895183
-Total time for parallel_for elapsed:  12.896078
-Total time for static_parallel_for elapsed:  12.861514
-Total time for dynamic_parallel_for elapsed:  12.886132
-Total time for guided_parallel_for elapsed:  12.904375
+- Experiment 0 
+    - This experiment tests the time savings by removing implicit barriers and parallel regions
+    - experiment0.c: The main function for Experiment 0.
+    - experiment0.sh: `sbatch experiment0.sh` to run this experiment
 
-Total time for sequential elapsed:  12.899295
-Total time for parallel_for elapsed:  12.898575
-Total time for static_parallel_for elapsed:  12.859763
-Total time for dynamic_parallel_for elapsed:  12.878765
-Total time for guided_parallel_for elapsed:  12.897214
+- Experiment 1 
+    - Experiment 1 investigates the effect of changing the number of threads on the time take for computation.
+    - experiment1.c: The main function for Experiment 1.
+    - experiment1.sh: `sbatch experiment1.sh` to run this experiment
+
+- Experiment 2 
+    - Experiment 2 investigates the increase in time taken as the number of fish increases.
+    - experiment2.c: The main function for Experiment 2.
+    - experiment2.sh: `sbatch experiment2.sh` to run this experiment
+
+- Experiment 3 
+    - Experiment 3 investigates the increase in time taken as the number of steps increases.
+    - experiment3.c: The main function for Experiment 3.
+    - experiment3.sh: `sbatch experiment3.sh` to run this experiment
+
+- Experiment 4 
+    - Experiment 4 investigates the difference in time taken for different scheduling methods and compares them to the base cases for both sequential and parallel.
+    - experiment4.c: The main function for Experiment 4.
+    - experiment4.sh: `sbatch experiment4.sh` to run this experiment
+
+- Experiment 5 
+    - Experiment 5 investigates the time savings that can be garnered from using different worksharing constructs such as sections and tasks.
+    - experiment5.c: The main function for Experiment 5.
+    - experiment5.sh: `sbatch experiment5.sh` to run this experiment
+
+
 

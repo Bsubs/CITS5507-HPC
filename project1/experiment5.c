@@ -10,8 +10,8 @@
 
 /**
  * This will investigate the results of using tasks, taskloop and sections
- * Average time will be taken over 10 runs
- * Threads: 16
+ * Average time will be taken over 5 runs
+ * Threads: 4
  * Num steps: 10,000
  * Num fish:  10,000
 */
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     // Using taskloop
     double totalTime = 0;
-    for(int j = 0; j < 3; j++){
+    for(int j = 0; j < 5; j++){
         double start = omp_get_wtime();
         Fish* fishArray1 = initializeFish(numfish);
 
@@ -32,12 +32,12 @@ int main(int argc, char *argv[]) {
         double timeElapsed = end - start;
         totalTime += timeElapsed;
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for taskloop: %10.6f\n", totalTime );
     
     // Using tasks
     totalTime = 0;
-    for(int j = 0; j < 3; j++){
+    for(int j = 0; j < 5; j++){
         double start = omp_get_wtime();
         Fish* fishArray1 = initializeFish(numfish);
 
@@ -47,12 +47,12 @@ int main(int argc, char *argv[]) {
         double timeElapsed = end - start;
         totalTime += timeElapsed;
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for tasks: %10.6f\n", totalTime );
 
     // Using sections
     totalTime = 0;
-    for(int j = 0; j < 3; j++){
+    for(int j = 0; j < 5; j++){
         double start = omp_get_wtime();
         Fish* fishArray1 = initializeFish(numfish);
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
         double timeElapsed = end - start;
         totalTime += timeElapsed;
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for sections: %10.6f\n", totalTime );
     
 }

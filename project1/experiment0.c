@@ -10,7 +10,7 @@
 
 /**
  * This will investigate the impact of removing implicit barriers on parallel performance
- * Average time will be taken over 10 runs
+ * Average time will be taken over 5 runs
  * Threads: 4
  * Num steps: 10,000
  * Num fish:  10,000
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     double totalTime = 0;
     
     // Run sequentialOld code
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 5; i++){
         double start = omp_get_wtime();
 
         srand(time(NULL));
@@ -34,12 +34,12 @@ int main(int argc, char *argv[]) {
         totalTime += timeElapsed;
 
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for sequentialOld elapsed: %10.6f\n",totalTime );
 
     // Run sequential
     totalTime = 0;
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 5; i++){
         // Run parallel for code
         double start = omp_get_wtime();
 
@@ -53,12 +53,12 @@ int main(int argc, char *argv[]) {
         totalTime += timeElapsed;
 
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for sequential elapsed: %10.6f\n",totalTime );
 
     // Run parallelReductionOld
     totalTime = 0;
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 5; i++){
         // Run parallel for code
         double start = omp_get_wtime();
 
@@ -72,12 +72,12 @@ int main(int argc, char *argv[]) {
         totalTime += timeElapsed;
 
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for parallelReductionOld elapsed: %10.6f\n",totalTime );
 
     // Run parallelReduction
     totalTime = 0;
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 5; i++){
         // Run parallel for code
         double start = omp_get_wtime();
 
@@ -91,6 +91,6 @@ int main(int argc, char *argv[]) {
         totalTime += timeElapsed;
 
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for parallelReduction elapsed: %10.6f\n",totalTime );
 }

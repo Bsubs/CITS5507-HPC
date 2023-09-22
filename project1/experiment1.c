@@ -10,7 +10,7 @@
 
 /**
  * This will investigate the results of changing the number of threads on performance
- * Average time will be taken over 10 runs
+ * Average time will be taken over 5 runs
  * Threads: 1 , 2, 4, 8, 16, 32
  * Num steps: 10,000
  * Num fish:  10,000
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     int numfish = 10000;
     int numsteps = 10000;
     double totalTime = 0;
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 5; i++){
         // Run parallel for code
         double start = omp_get_wtime();
 
@@ -33,6 +33,6 @@ int main(int argc, char *argv[]) {
         totalTime += timeElapsed;
 
     }
-    totalTime = totalTime / 3; 
+    totalTime = totalTime / 5; 
     printf("Average time for parallel_for elapsed: %10.6f\n",totalTime );
 }
