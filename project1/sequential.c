@@ -14,7 +14,7 @@
  * @param numfish An integer representing the number of fishes in fishArray.
  * @param numsteps An integer representing the number of simulation steps to be performed.
  */
-void sequentialOld(Fish* fishArray, int numfish, int numsteps){
+void sequential(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;
@@ -44,14 +44,14 @@ void sequentialOld(Fish* fishArray, int numfish, int numsteps){
 /**
  * @brief Simulates the movement and actions of an array of Fish structures over a specified number of steps.
  * 
- * The function makes use of 2 inner loops compared to the three in sequentialOld. The performance of this 
+ * The function makes use of 2 inner loops compared to the three in sequential. The performance of this 
  * function is worse than sequentialOld
  *
  * @param fishArray A pointer to an array of Fish structures representing the fishes to be processed.
  * @param numfish An integer representing the number of fishes in fishArray.
  * @param numsteps An integer representing the number of simulation steps to be performed.
  */
-void sequential(Fish* fishArray, int numfish, int numsteps){
+void sequentialCondensed(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;

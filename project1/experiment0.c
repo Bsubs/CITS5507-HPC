@@ -20,13 +20,13 @@ int main(int argc, char *argv[]) {
     int numsteps = 10000;
     double totalTime = 0;
     
-    // Run sequentialOld code
+    // Run sequentialCondensed code
     for(int i = 0; i < 5; i++){
         double start = omp_get_wtime();
 
         srand(time(NULL));
         Fish* fishArray1 = initializeFish(numfish);
-        sequentialOld(fishArray1, numfish, numsteps);
+        sequentialCondensed(fishArray1, numfish, numsteps);
         // Remember to free
         free(fishArray1);
         double end = omp_get_wtime();
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     }
     totalTime = totalTime / 5; 
-    printf("Average time for sequentialOld elapsed: %10.6f\n",totalTime );
+    printf("Average time for sequentialCondensed elapsed: %10.6f\n",totalTime );
 
     // Run sequential
     totalTime = 0;
