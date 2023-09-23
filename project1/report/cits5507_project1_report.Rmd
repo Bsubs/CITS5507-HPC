@@ -98,28 +98,62 @@ The base case for parallel functions in this simulation is the `void parallelRed
 
 3. The last inner loop is also parallelized using `#pragma omp for reduction(+:sumOfProduct,sumOfDistance)` to avoid race conditions when updating the two variables. 
 
-# Experiment 0
+# Experiment 0 - Memory Caching
 
-Given the base cases of the project as described in sections 3.1 and 3.2, it was pointed out that they might suffer a significant performance penalty for the parallel code especially as the number of threads increased. A discussion in the lab indicated that the contents of the loops from steps 3 and 4 could be combined. Removing one of the inner loops would remove the associated parallel region and the implicit barrier that comes with it, thus giving the parallel code a boost in performance. Experiment 0 sought to find out how much a performance gain would be achieved from removing one of the inner loops and the associated parallel regions. The following functions, found in `sequential.c` and `parallel_functions.c` were used in this experiment:
+- Source file: `experiment0.c`
+- Run with: `sbatch experiment0.sh`
+- Number of threads: 4
+- Number of steps: 10,000
+- Number of fish: 10,000
 
-1. `void sequential(Fish* fishArray, int numfish, int numsteps)`: The updated version of the sequential code with 2 inner loops
+## Sequential Memory Cache
 
-2. `void sequentialOld(Fish* fishArray, int numfish, int numsteps)`: The original version of the sequential code with 3 inner loops 
+The first experiment conducted was related to memory caching. Section 3.1 describes the base case sequential function that has 3 inner loops. We attempt to improve performance by condensing the three inner loops into two. The following 2 functions were used in this experiment and their implementations can be found in `sequential.c`.
 
-3. `void parallelReduction(Fish* fishArray, int numfish, int numsteps)`: The updated version of the parallel code with 2 inner loops and parallel regions
- 
-4. `void parallelReduction(Fish* fishArray, int numfish, int numsteps)`: The original version of the parallel code with 3 inner loops and parallel regions
+1. `void sequentialCondensed(Fish* fishArray, int numfish, int numsteps)`: The original version of the sequential code with 3 inner loops as described in section 3.1.
 
-The results of this experiment were unexpected. The `sequentialOld` with three inner loops outperforms the updated `sequential` function with 2 inner loops consistently. A reason for this might be the way the loops access memory. Accessing memory in a sequential manner is faster than accessing it in a random manner because of cache locality. The `sequentialOld` function, each loop accesses a smaller subset of Fish properties, which could lead to better cache locality.
+2. `void sequential(Fish* fishArray, int numfish, int numsteps)`: The sequential code that condenses the eat, swim and accumulation of barycentre variables into one loop.
 
-Similarly, the parallel code also exhibits a performance difference between the new and old code, however, this difference is not as stark as compared to the sequential code. It appears that the removal of implicit barriers by the removal of one parallel region does have a performance benefit but it is not enough to outweigh the memory inefficiencies from condensing 3 loops into 2.
+The plot below shows the result of this experiment. The `sequential` function with 3 inner loops outperforms the function with 2 inner loops by a clear margin. This might be due to the spatial and temporal locality of accessing memory.
 
-As a result, the code for the remainder of the experiments will make use of `void sequentialOld` as the base case. Any subsequent modification to these loops (as seen in experiments 4 & 5) will make use of the base case as specified in section 3.2. 
+Spatial locality refers to the tendency of the program to access data that is located close to the data it has accessed recently.  
+
+In the `sequential` function, each loop accesses and modifies a different set of properties of the Fish objects in the array. This could potentially lead to better spatial locality, as each loop would be working within a smaller memory footprint, allowing more efficient use of the cache and better prefetching. 
+
+In the `sequentialCondensed` function, different properties of the Fish objects are accessed and modified within the same loop. This can potentially result in lower spatial locality and more cache misses, as the memory accessed in the loop is more scattered, and the CPU needs to load different parts of the objects into the cache more frequently.
+
+The results of this experiment show that reducing the number of loops might not be the best option. In cases where the dataset is large enough that it doesn’t fit well into the cache, having better spaital locality improves performance. 
 
 ```{r, echo=FALSE, warning=FALSE}
 # Arrange the data in ascending order based on the exp4 column
 experiment0 <- df %>%
-  filter(!is.na(exp0))
+  filter(!is.na(exp0) & exp0 %in% c("Sequential", "SequentialCondensed"))
+
+# Create the plot
+ggplot(data = experiment0, aes(x = factor(exp0), y = exp0t, fill = factor(exp0))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(exp0t, 2)), vjust = -0.5) +  # Add text labels with rounded values
+  labs(x = "Function", y = "Time(s)") +
+  scale_fill_discrete() +  # Use different colors for each bar
+  theme_minimal()
+```
+
+## Removing Parallel Regions
+
+Section 4.1 demonstrates that removing and inner loop may degrade performance due to worse spatial locality of memory. However, this is more complicated when it is applied to the parallel code as described in section 3.2. By removing one of the inner loops, we also remove the associated parallel region and the overheads that come with it, such as thread creation and destruction as well as the implicit barrier that comes at the end of a parallel region. Therefore, the hypothesis is that the difference in the parallel code would be smaller than the difference in the sequential code. The following 2 functions were used in this experiment and their implementations can be found in `parallel_functions.c`
+
+1. `void parallelReduction(Fish* fishArray, int numfish, int numsteps)`: The original version of the parallel code with 3 inner loops and parallel regions as described in section 3.2.
+ 
+2. `void parallelReductionCondensed(Fish* fishArray, int numfish, int numsteps)`: The parallel code that condenses the eat, swim and accumulation of barycentre variables into one loop and removes the associated parallel region.
+
+The plot below shows the results of this experiment. It can be observed that the difference between the two functions is negligible. This confirms the hypothesis that the removal of parallel regions would give a performance benefit to the function. In this case, it was enough to close the gap between the two different functions when compared to the sequential versions. 
+
+For clarity, any comparison against the base functions in future experiments will be done against `sequential` and `parallelReduction`. 
+
+```{r, echo=FALSE, warning=FALSE}
+# Arrange the data in ascending order based on the exp4 column
+experiment0 <- df %>%
+  filter(!is.na(exp0) & exp0 %in% c("Parallel", "ParallelCondensed"))
 
 # Create the plot
 ggplot(data = experiment0, aes(x = factor(exp0), y = exp0t, fill = factor(exp0))) +
@@ -182,6 +216,7 @@ ggplot(df, aes(x = exp2, y = exp2t)) +
   theme_minimal()+
   scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
+
 # Experiment 3 - Comparing Steps and Fishes
 Experiment 3 investigates the increase in time taken as the number of steps increases. This experiment makes use of the base case functions parallel function. The number of fish and threads are held constant and the only variable changed is the number of steps.  
 
@@ -241,7 +276,7 @@ Experiment 4 investigates the difference in time taken for different scheduling 
 
 1. **Static**: Iterations are divided into equal-sized chunks and each thread gets a chunk of iterations to execute. In this experiment, the chunk size is not specified in the program, therefore, OpenMP divides the iterations into equal parts, and each thread gets num_iterations / num_threads iterations to execute.
 
-2. **Dynamic**: Dynamic scheduling assigns a chunk of iterations to a thread, and once the thread is finished, it retrieves the next chunk to process. This can help balance the workload if the time to process each iteration can vary.
+2. **Dynamic**: Dynamic scheduling assigns a chunk of iterations to a thread, and once the thread is finished, it retrieves the next chunk to process. This can help balance the workload if the time to process each iteration can vary. Given that a chunksize was not specified, OpenMP assigns one iteration at a time to the threads.
 
 3. **Guided**: Guided scheduling is a variation of dynamic scheduling where the chunk sizes decrease exponentially. Early on, threads get larger chunks, and as they finish, they get smaller chunks. This can help in situations where there's a lot of variation in workload, as threads that finish early can take on more work.
 
@@ -304,7 +339,7 @@ The graph below plots the time taken for each scheduling method as the number of
 ```{r, echo=FALSE, warning=FALSE}
 # Convert the data to long format
 df2_long <- df2 %>%
-  pivot_longer(cols = -c("Threads", "Taskloop", "Tasks", "Sections"), names_to = "Variable", values_to = "Value")
+  pivot_longer(cols = -c("Threads", "Taskloop", "Tasks", "Sections", "Static_Chunks", "Dynamic_Chunks", "Chunksize"), names_to = "Variable", values_to = "Value")
 
 # Plot the data using ggplot
 ggplot(data = df2_long, aes(x = Threads, y = Value, color = Variable, shape = Variable)) +
@@ -315,6 +350,30 @@ ggplot(data = df2_long, aes(x = Threads, y = Value, color = Variable, shape = Va
   labs(title = "Performance by Scheduling Type", x = "Num Threads", y = "Time(s)")
 ```
 
+## Different Chunksize
+
+For the **static** and **dynamic** scheduling methods, there is an option to set the chunksize that each thread executes. In sections 7.1 and 7.2, this option was not exercised. Resulting in the default division methods used. For static, OpenMP divides the iterations into chunks that are approximately equal in size and assigns one chunk to each thread. For dynamic, OpenMP assigns one iteration at a time to the threads.
+
+The plot below shows the results of the experiment.
+
+1. **Static**: In static scheduling, when the chunk size is small (e.g., 1), each thread will be assigned a very small amount of work in each cycle, leading to frequent synchronization and hence, higher time consumption. As the chunk size increases, the overhead due to synchronization decreases, leading to better performance. This improvement plateaus after chunksize exceeds 100.
+
+2. **Dynamic**: In dynamic scheduling, a smaller chunk size means more frequent synchronization and higher overhead, similar to static scheduling. However, dynamic scheduling can handle load imbalance better than static scheduling as it assigns iterations one by one to idle threads. This is reflected in dynamic scheduling performing better at lower chunksizes before eventually falling behind static scheduling.
+
+
+```{r, echo=FALSE, warning=FALSE}
+# Convert the data to long format
+df2_long <- df2 %>%
+  pivot_longer(cols = c("Static_Chunks", "Dynamic_Chunks"), names_to = "Variable", values_to = "Value")
+
+# Plot the data using ggplot
+ggplot(data = df2_long, aes(x = Chunksize, y = Value, color = Variable, shape = Variable)) +
+  geom_point(size = 3) +
+  geom_line() +
+  scale_x_continuous(trans = 'log10') + 
+  theme_minimal() +
+  labs(title = "Performance by Chunksize", x = "Chunksize", y = "Time(s)")
+```
 
 # Experiment 5 - Tasks and Sections
 Experiment 5 investigates the time savings that can be garnered from using different worksharing constructs such as sections and tasks. Three different methods will be compared to the base sequential and parallel cases:
