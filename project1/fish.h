@@ -1,9 +1,10 @@
 #ifndef FISH_H
 #define FISH_H
-
-#define NUMFISH 10000
 #define STARTWEIGHT 10000
-#define NUMSTEPS 10000
+
+/**
+ * Author: Joo Kai TAY (22489437)
+*/
 
 typedef struct fish {
     double euclDist;

@@ -1,5 +1,7 @@
 # CITS5507 Project 1 
 
+Author: Joo Kai TAY (22489437)
+
 ## Functions
 
 - Fish Simulation

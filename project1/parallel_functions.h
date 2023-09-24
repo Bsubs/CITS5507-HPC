@@ -1,7 +1,10 @@
 #ifndef PARALLEL_FUNC
 #define PARALLEL_FUNC
 #include "fish.h"
-#define CHUNKSIZE 5
+
+/**
+ * Author: Joo Kai TAY (22489437)
+*/
 
 void parallelReduction(Fish* fishArray, int numfish, int numsteps);
 void parallelReductionCondensed(Fish* fishArray, int numfish, int numsteps);
