@@ -1,0 +1,790 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={CITS5507 Project 1 Report},
+  pdfauthor={Joo Kai Tay (22489437)},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{CITS5507 Project 1 Report}
+\author{Joo Kai Tay (22489437)}
+\date{2023-09-18}
+
+\begin{document}
+\maketitle
+
+\hypertarget{project-overview}{%
+\section{Project Overview}\label{project-overview}}
+
+This project aims to test various sequential and parallel
+implementations of search based on the Fish School Behavior (FSB)
+algorithm. The performance for each experiment will be measured by the
+time taken to execute the program given a number of fish and steps.
+
+\hypertarget{fish-simulation}{%
+\section{Fish simulation}\label{fish-simulation}}
+
+\hypertarget{fish-structure}{%
+\subsection{Fish Structure}\label{fish-structure}}
+
+The file fish.h contains the definition of a fish in this simulation.
+The struct Fish contains the following parameters:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{double euclDist}: This is the euclidean distance of the fish
+  from the origin in the previous step
+\item
+  \textbf{double x\_c}: This holds the x coordinate of the fish in the
+  current step
+\item
+  \textbf{double y\_c}: This holds the y coordinate of the fish in the
+  current step
+\item
+  \textbf{double weight\_c}: This holds the weight of the fish in the
+  current step
+\item
+  \textbf{double weight\_p}: This holds the weight of the fish in the
+  previous step
+\end{itemize}
+
+\begin{verbatim}
+typedef struct fish {
+    double euclDist;
+    double x_c;
+    double y_c;
+    double weight_c;
+    double weight_p;
+} Fish;
+\end{verbatim}
+
+\hypertarget{fish-methods}{%
+\subsection{Fish methods}\label{fish-methods}}
+
+fish.h also contains declarations for functions that are implemented in
+fish.c
+
+This function dynamically allocates memory in the heap for an array of
+Fish structures and initializes each fish with random coordinates within
+a 200x200 square which represents the pond. The parameter
+\texttt{numfish} is used to specify the number of fish instead of a
+\texttt{\#define\ NUMFISH} C preprocessor constant to allow for
+experiments with different numbers of fish.
+
+\begin{verbatim}
+Fish* initializeFish(int numfish)
+\end{verbatim}
+
+This function updates the weight of a fish during a simulation step. It
+takes 3 parameters:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Fish* fish1}: A pointer to the fish that will be updated
+\item
+  \textbf{double maxObj}: This is the maximum difference in distance
+  between the previous step and the current step
+\item
+  \textbf{int step}: The current step of the function
+\end{itemize}
+
+\begin{verbatim}
+void eat(Fish* fish1, double maxObj, int step)
+\end{verbatim}
+
+This function updates the position of a fish instance if its current
+weight is less than two times the STARTWEIGHT. The new position is
+calculated randomly within -0.1 and 0.1 and is then clamped to ensure it
+remains within a 200 x 200 square.
+
+\begin{verbatim}
+void swim(Fish* fish1)
+\end{verbatim}
+
+\hypertarget{experiment-methodology}{%
+\section{Experiment Methodology}\label{experiment-methodology}}
+
+The experiments make use of functions declared in \texttt{sequential.h}
+and \texttt{parallel\_functions.h}. Each experiment has its
+corresponding \texttt{experimentX.c} and \texttt{experimentX.sh} files.
+To run an experiment, SSH into Setonix and use the command:
+\texttt{sbatch\ experimentX.sh} to run the desired experiment. The
+reason for using this method of breaking up the experiments is due to
+the limits of computation time imposed by Setonix.
+
+Each experiment was ran 10 times and the results shown are an average of
+those 10 simulations.
+
+NUMSTEPS and NUMFISH are not defined using C preprocessor definitions
+for the ease of testing using different values of each.
+
+\hypertarget{base-case---sequential}{%
+\subsection{Base Case - Sequential}\label{base-case---sequential}}
+
+The base case for this simulation was implemented using the
+\texttt{void\ sequential(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}
+function implemented in \texttt{sequential.c}. The FSB problem was
+tackled as such:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The outer loop runs for a number of iterations equal to
+  \texttt{NUMSTEPS}.
+\item
+  The first of the inner loops iterates over all the fish present and
+  finds the maximum difference in the position of the fish in the
+  current and the fish in the previous round.
+\item
+  The second of the inner loops uses the maximum difference found in
+  step 2 and performs the eat and swim operations on each fish in the
+  array.
+\item
+  The final of the inner loops calculates the numerator and denominator
+  variables for the barycentre.
+\item
+  The barycentre is calculated using the values from step 4.
+\end{enumerate}
+
+\hypertarget{base-case---parallel}{%
+\subsection{Base Case - Parallel}\label{base-case---parallel}}
+
+The base case for parallel functions in this simulation is the
+\texttt{void\ parallelReduction(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}
+function implemented in \texttt{parallel\_functions.c}.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The first inner loop is parallelized using
+  \texttt{\#pragma\ omp\ for\ reduction(max:maxDiff)} inside the
+  parallel region. The reduction clause ensures that the
+  \texttt{maxDiff} variable is updated in a thread-safe manner, to avoid
+  any race conditions when updating the variable.
+\item
+  The second inner loop is parallelized using
+  \texttt{\#pragma\ omp\ for} as the eat and swim operations are
+  thread-safe, therefore, no special clauses need to be attached to this
+  loop.
+\item
+  The last inner loop is also parallelized using
+  \texttt{\#pragma\ omp\ for\ reduction(+:sumOfProduct,sumOfDistance)}
+  to avoid race conditions when updating the two variables.
+\end{enumerate}
+
+\hypertarget{experiment-0---memory-caching}{%
+\section{Experiment 0 - Memory
+Caching}\label{experiment-0---memory-caching}}
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment0.c}
+\item
+  Run with: \texttt{sbatch\ experiment0.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+\hypertarget{sequential-memory-cache}{%
+\subsection{Sequential Memory Cache}\label{sequential-memory-cache}}
+
+The first experiment conducted was related to memory caching. Section
+3.1 describes the base case sequential function that has 3 inner loops.
+We attempt to improve performance by condensing the three inner loops
+into two. The following 2 functions were used in this experiment and
+their implementations can be found in \texttt{sequential.c}.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \texttt{void\ sequentialCondensed(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  The original version of the sequential code with 3 inner loops as
+  described in section 3.1.
+\item
+  \texttt{void\ sequential(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  The sequential code that condenses the eat, swim and accumulation of
+  barycentre variables into one loop.
+\end{enumerate}
+
+The plot below shows the result of this experiment. The
+\texttt{sequential} function with 3 inner loops outperforms the function
+with 2 inner loops by a clear margin. This might be due to the spatial
+and temporal locality of accessing memory.
+
+Spatial locality refers to the tendency of the program to access data
+that is located close to the data it has accessed recently.
+
+In the \texttt{sequential} function, each loop accesses and modifies a
+different set of properties of the Fish objects in the array. This could
+potentially lead to better spatial locality, as each loop would be
+working within a smaller memory footprint, allowing more efficient use
+of the cache and better prefetching.
+
+In the \texttt{sequentialCondensed} function, different properties of
+the Fish objects are accessed and modified within the same loop. This
+can potentially result in lower spatial locality and more cache misses,
+as the memory accessed in the loop is more scattered, and the CPU needs
+to load different parts of the objects into the cache more frequently.
+
+The results of this experiment show that reducing the number of loops
+might not be the best option. In cases where the dataset is large enough
+that it doesn't fit well into the cache, having better spaital locality
+improves performance.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\hypertarget{removing-parallel-regions}{%
+\subsection{Removing Parallel Regions}\label{removing-parallel-regions}}
+
+Section 4.1 demonstrates that removing and inner loop may degrade
+performance due to worse spatial locality of memory. However, this is
+more complicated when it is applied to the parallel code as described in
+section 3.2. By removing one of the inner loops, we also remove the
+associated parallel region and the overheads that come with it, such as
+thread creation and destruction as well as the implicit barrier that
+comes at the end of a parallel region. Therefore, the hypothesis is that
+the difference in the parallel code would be smaller than the difference
+in the sequential code. The following 2 functions were used in this
+experiment and their implementations can be found in
+\texttt{parallel\_functions.c}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \texttt{void\ parallelReduction(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  The original version of the parallel code with 3 inner loops and
+  parallel regions as described in section 3.2.
+\item
+  \texttt{void\ parallelReductionCondensed(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  The parallel code that condenses the eat, swim and accumulation of
+  barycentre variables into one loop and removes the associated parallel
+  region.
+\end{enumerate}
+
+The plot below shows the results of this experiment. It can be observed
+that the difference between the two functions is negligible. This
+confirms the hypothesis that the removal of parallel regions would give
+a performance benefit to the function. In this case, it was enough to
+close the gap between the two different functions when compared to the
+sequential versions.
+
+For clarity, any comparison against the base functions in future
+experiments will be done against \texttt{sequential} and
+\texttt{parallelReduction}.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\hypertarget{experiment-1---time-taken-as-number-of-threads-increase}{%
+\section{Experiment 1 - Time taken as number of threads
+increase}\label{experiment-1---time-taken-as-number-of-threads-increase}}
+
+Experiment 1 investigates the effect of changing the number of threads
+on the time take for computation. This experiment makes use of the base
+case functions for both sequential and parallel as described in sections
+3.1 and 3.2. The number of steps and fish are held constant and the only
+variable changed is the number of threads as defined by setting the
+environment variable \texttt{OMP\_NUM\_THREADS}.
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment1.c}
+\item
+  Run with: \texttt{sbatch\ experiment1.sh}
+\item
+  Number of threads: 1, 2, 4, 8, 16, 32, 64
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+The graph below shows the results of the experiment. It can be observed
+that the increase in time as the number of threads increase is
+exponential. One possible conclusion that can be drawn from this is that
+the overhead introduced by parallelization which includes thread
+creation and synchronization outweighs the benefits that parallel
+computing provides in this case. As the computation done in each of the
+inner loops is very small, as the number of threads increase, the
+overhead from handling all those threads vastly outstrips the
+performance gains from parallelization. This is why we see the
+exponential growth in time taken as the number of threads increase.
+
+Future experiments will be run with 4 threads as with higher number of
+threads, it would not be easy to determine if any performance penalties
+come from having too many threads or from the additional constructs
+being tested.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-5-1.pdf}
+\newpage
+
+\hypertarget{experiment-2---investigating-time-vs-number-of-fish}{%
+\section{Experiment 2 - Investigating time vs number of
+fish}\label{experiment-2---investigating-time-vs-number-of-fish}}
+
+Experiment 2 investigates the increase in time taken as the number of
+fish increases. This experiment makes use of the base case parallel
+function. The number of steps and threads are held constant and the only
+variable changed is the number of fish.
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment2.c}
+\item
+  Run with: \texttt{sbatch\ experiment2.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 5000, 10000, 15000, 20000, 25000
+\end{itemize}
+
+The plot below shows the increase in time as the number of fish
+increases is linear.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-6-1.pdf}
+\newpage
+
+\hypertarget{experiment-3---comparing-steps-and-fishes}{%
+\section{Experiment 3 - Comparing Steps and
+Fishes}\label{experiment-3---comparing-steps-and-fishes}}
+
+Experiment 3 investigates the increase in time taken as the number of
+steps increases. This experiment makes use of the base case functions
+parallel function. The number of fish and threads are held constant and
+the only variable changed is the number of steps.
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment3.c}
+\item
+  Run with: \texttt{sbatch\ experiment3.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 5000, 10000, 15000, 20000, 25000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+The plot below shows that the initial gradient is steep, the rate of
+increase in time taken slows down as the number of steps increase.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\hypertarget{changing-steps-vs-changing-fishes}{%
+\subsection{Changing steps vs changing
+fishes}\label{changing-steps-vs-changing-fishes}}
+
+The following graph shows the results for experiments 2 and 3 overlayed
+on top of each other. It can be observed that from
+5000-\textgreater20000 steps and fishes, the increase in time taken is
+identical. However, the difference in time starts to be seen from
+20000-\textgreater100000 where the growth in time from increasing the
+number of fish starts to rapidly outpace the growth in time from
+increasing the number of fish.
+
+This behavior is also something unexpected as the time complexity of the
+program is \textbf{O(numsteps * numfish)}. By this complexity reasoning,
+we expect the function's time taken to scale linearly as observed in the
+relationship between time taken and numfish. However, this relationship
+does not hold true when varying numsteps, which mean that there might be
+other factors such as hardware or memory limitations.
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\hypertarget{experiment-4---thread-scheduling}{%
+\section{Experiment 4 - Thread
+Scheduling}\label{experiment-4---thread-scheduling}}
+
+\hypertarget{thread-scheduling-methods}{%
+\subsection{Thread Scheduling Methods}\label{thread-scheduling-methods}}
+
+Experiment 4 investigates the difference in time taken for different
+scheduling methods and compares them to the base cases for both
+sequential and parallel. The function
+\texttt{void\ parallelSchedule(Fish*\ fishArray,\ char*\ scheduleType,\ int\ numfish,\ int\ numsteps)}
+which is implemented in \texttt{parallel\_functions.c} is an extension
+of the base case parallel function that implements four different
+scheduling types.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Static}: Iterations are divided into equal-sized chunks and
+  each thread gets a chunk of iterations to execute. In this experiment,
+  the chunk size is not specified in the program, therefore, OpenMP
+  divides the iterations into equal parts, and each thread gets
+  num\_iterations / num\_threads iterations to execute.
+\item
+  \textbf{Dynamic}: Dynamic scheduling assigns a chunk of iterations to
+  a thread, and once the thread is finished, it retrieves the next chunk
+  to process. This can help balance the workload if the time to process
+  each iteration can vary. Given that a chunksize was not specified,
+  OpenMP assigns one iteration at a time to the threads.
+\item
+  \textbf{Guided}: Guided scheduling is a variation of dynamic
+  scheduling where the chunk sizes decrease exponentially. Early on,
+  threads get larger chunks, and as they finish, they get smaller
+  chunks. This can help in situations where there's a lot of variation
+  in workload, as threads that finish early can take on more work.
+\item
+  \textbf{Runtime}: The scheduling type and chunk size are determined by
+  the environment variables or runtime library routines.
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment4.c}
+\item
+  Run with: \texttt{sbatch\ experiment4.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+The chart below shows the results of the different thread scheduling
+methods sorted in descending order. These are some observations about
+the data collected:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Static}: Given that the workload is fairly consistent across
+  iterations of the loop, static scheduling is the fastest among the
+  various thread scheduling methods tested as it does not incur any of
+  the overhead of dynamically managing threads. For this number of
+  threads, using the static scheudling method outperforms the base
+  parallel case.
+\item
+  \textbf{Guided}: Guided scheduling is very close in performance to
+  static scheduling which indicates that it adapts fairly well to the
+  workload in the FSB simulation.
+\item
+  \textbf{Dynamic}: Given that the performance of dynamic scheduling is
+  significantly worse than static and guided, it suggests that the
+  overhead of managing the dynamic assignment of chunks outweighs the
+  benefits of potentially more balanced workloads especially in this FSB
+  simulation where the workload across the various iterations of the
+  loop does not vary much.
+\item
+  \textbf{Runtime}: Runtime scheduling defers the decision of which
+  schedule type to use until runtime. The scheduling type is set by an
+  environment variable. Since it's the slowest, it could be because the
+  environment's default choice isn't optimal for this specific workload,
+  or there might be additional overheads involved in determining the
+  schedule at runtime.
+\end{enumerate}
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\hypertarget{different-scheduling-methods-across-multiple-threads}{%
+\subsection{Different scheduling methods across multiple
+threads}\label{different-scheduling-methods-across-multiple-threads}}
+
+A sub-experiment was conducted after reviewing the results of experiment
+4. In experiment 4b, the same scheduling methods were tested with
+different number of threads to determine if the conclusions drawn remain
+the same as the number of threads increase. This was achieved by
+modifying the \texttt{export\ OMP\_NUM\_THREADS} in
+\texttt{experiment4.sh}.
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment4.c}
+\item
+  Run with: \texttt{sbatch\ experiment4.sh}
+\item
+  Number of threads: 4, 8, 16, 32, 64
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+The graph below plots the time taken for each scheduling method as the
+number of threads increase. The following observations can be drawn from
+the data:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The values for \textbf{Dynamic} and \textbf{Runtime} are consistently
+  similar as the number of threads increase and do not diverge like the
+  other 3 scheduling methods tested. given this pattern, the scheduling
+  method selected at runtime in Setonix is very possibly dynamic which
+  is what results in the very similar behaviors in both graphs.
+\item
+  \textbf{Static}: While this was the best performer at 4 threads,
+  performance slightly degrades as the number of threads increases. This
+  could be due to overheads from managing more threads, or the fact that
+  the iterations might not be divided evenly among threads as their
+  number increases, leading to some threads sitting idle while others
+  are still working.
+\item
+  \textbf{Guided}: This method performed very similarly to static and
+  parallel\_base from 4 to 16 threads, however, past that point it is
+  observed that the performance of the guided scheduling type degrades
+  rapidly as the number of threads increase. The overheads associated
+  with adapting the chunk size dynamically increase with more threads
+  which could explain this rapid increase in time taken.
+\item
+  The parallel base outperforms all the other methods at higher thread
+  counts as it does not need to deal with the overhead of managing the
+  different schedules for a large number of threads.
+\end{enumerate}
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+\hypertarget{different-chunksize}{%
+\subsection{Different Chunksize}\label{different-chunksize}}
+
+For the \textbf{static} and \textbf{dynamic} scheduling methods, there
+is an option to set the chunksize that each thread executes. In sections
+7.1 and 7.2, this option was not exercised. Resulting in the default
+division methods used. For static, OpenMP divides the iterations into
+chunks that are approximately equal in size and assigns one chunk to
+each thread. For dynamic, OpenMP assigns one iteration at a time to the
+threads.
+
+The plot below shows the results of the experiment.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Static}: In static scheduling, when the chunk size is small
+  (e.g., 1), each thread will be assigned a very small amount of work in
+  each cycle, leading to frequent synchronization and hence, higher time
+  consumption. As the chunk size increases, the overhead due to
+  synchronization decreases, leading to better performance. This
+  improvement plateaus after chunksize exceeds 100.
+\item
+  \textbf{Dynamic}: In dynamic scheduling, a smaller chunk size means
+  more frequent synchronization and higher overhead, similar to static
+  scheduling. However, dynamic scheduling can handle load imbalance
+  better than static scheduling as it assigns iterations one by one to
+  idle threads. This is reflected in dynamic scheduling performing
+  better at lower chunksizes before eventually falling behind static
+  scheduling.
+\end{enumerate}
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\hypertarget{experiment-5---tasks-and-sections}{%
+\section{Experiment 5 - Tasks and
+Sections}\label{experiment-5---tasks-and-sections}}
+
+Experiment 5 investigates the time savings that can be garnered from
+using different worksharing constructs such as sections and tasks. Three
+different methods will be compared to the base sequential and parallel
+cases:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \texttt{void\ parallelSections(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  This function makes use of sections from OpenMP. The sections
+  construct is used to define multiple independent blocks of code that
+  can be executed in parallel.
+\item
+  \texttt{void\ parallelTasks(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  This function makes use of tasks from OpenMP. Inside each loop, tasks
+  will be dynamically generated at runtime to handle a small portion of
+  the calculation. As this does not make use of the reduction clause, a
+  \texttt{\#pragma\ omp\ critical} directive needs to be used before
+  modifying any of the shared variables to prevent race conditions.
+\item
+  \texttt{void\ parallelTaskloop(Fish*\ fishArray,\ int\ numfish,\ int\ numsteps)}:
+  This function makes use of \texttt{\#pragma\ omp\ taskloop} directive.
+  The taskloop directive combines the concept of tasks and loops by
+  creating tasks for each iteration of a loop. This means that each
+  iteration can potentially run as a separate task, which allows for
+  better load balancing especially when the iterations have varying
+  execution times.
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment5.c}
+\item
+  Run with: \texttt{sbatch\ experiment5.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+The chart below shows the results of the different worksharing
+constructs sorted in descending order. These are some observations about
+the data collected:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  At 4 threads, none of the worksharing constructs outperform the base
+  parallel case.
+\item
+  \textbf{Tasks} and \textbf{Sections} performed similarly and were
+  noticably slower than taskloop. This suggests that the overhead from
+  using either of these constructs is not worthwhile for such a small
+  amount of threads.
+\end{enumerate}
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+\hypertarget{tasks-and-sections-across-multiple-threads}{%
+\subsection{Tasks and Sections across multiple
+threads}\label{tasks-and-sections-across-multiple-threads}}
+
+Similar to experiment 4, a sub-experiment was conducted to compare the
+performance of the different worksharing constructs as the number of
+threads increased. In experiment 5b, the same scheduling methods were
+tested with different number of threads to determine if the conclusions
+drawn remain the same as the number of threads increase. This was
+achieved by modifying the \texttt{export\ OMP\_NUM\_THREADS} in
+\texttt{experiment5.sh}.
+
+\begin{itemize}
+\tightlist
+\item
+  Source file: \texttt{experiment5.c}
+\item
+  Run with: \texttt{sbatch\ experiment5.sh}
+\item
+  Number of threads: 4
+\item
+  Number of steps: 10,000
+\item
+  Number of fish: 10,000
+\end{itemize}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Taskloop}: Taskloop execution time gradually increases with
+  the number of threads. While the difference between 4 and 8 threads is
+  minimal, the time continues to increase more significantly as the
+  thread count grows.
+\item
+  \textbf{Tasks}: The Tasks construct has a more pronounced increase in
+  execution time as the thread count rises. The overhead of managing
+  individual tasks seems to become quite significant, especially as the
+  number of threads increases, as evident from the steeper rise in times
+  from 32 to 64 threads.
+\item
+  \textbf{Sections}: While this construct performed the worse at 4
+  threads, it shows a more consistent and gradual increase in time with
+  a rising thread count. Interestingly, the time taken for 8 threads is
+  a tiny bit less than that for 4 threads, which could be within the
+  margin of error or might indicate that the sections are more
+  effectively utilized with 8 threads.
+\end{enumerate}
+
+\includegraphics{cits5507_project1_report_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+When considering the results of Experiments 0 to 5, it can be concluded
+that the sequential code is the best solution to this version of the FSB
+algorithm. However, a consistent theme throughout these experiments is
+that the work done in the loops is not sufficient to justify the
+benefits of parallelization. It should be noted that the algorithm
+implemented is a heavily simplified version of the actual FSB algorithm
+which lacks components such as running the collective-instinctive
+movement operator and collective-volitive movement operator. The
+inclusion of these and other missing components would greatly increase
+the work done in each step. If the work in each iteration is sufficient,
+the algorithm would benefit from the implementation of parallelization..
+
+If it was determined that the code would benefit from parallelization,
+the following could be implemented to further boost performance:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Use the \textbf{static} scheduling type to increase performance
+\item
+  Use \textbf{taskloop} if the number of threads is small and
+  \textbf{sections} if the number of threads is large.
+\end{enumerate}
+
+\end{document}

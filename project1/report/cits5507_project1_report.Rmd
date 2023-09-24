@@ -3,9 +3,15 @@ title: "CITS5507 Project 1 Report"
 author: "Joo Kai Tay (22489437)"
 date: "2023-09-18"
 output:
+  pdf_document: default
+  word_document: default
   html_document:
-    number_sections: true
+    number_sections: yes
 ---
+<style>
+body {
+text-align: justify}
+</style>
 
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE, results='hide'}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,6 +22,7 @@ library(ggplot2)
 library(dplyr)
 library(readxl)
 library(tidyverse)
+library(tinytex)
 ```
 ```{r, echo=FALSE}
 df <- read_excel("data.xlsx")
@@ -23,7 +30,7 @@ df2 <- read_excel(("data2.xlsx"))
 ```
 
 # Project Overview
-This project aims to test various sequential and parallel implementations of the Fish School Behavior (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the code given a number of fish and steps.
+This project aims to test various sequential and parallel implementations of search based on the Fish School Behavior (FSB) algorithm. The performance for each experiment will be measured by the time taken to execute the program given a number of fish and steps.
 
 # Fish simulation
 
@@ -135,7 +142,8 @@ ggplot(data = experiment0, aes(x = factor(exp0), y = exp0t, fill = factor(exp0))
   geom_text(aes(label = round(exp0t, 2)), vjust = -0.5) +  # Add text labels with rounded values
   labs(x = "Function", y = "Time(s)") +
   scale_fill_discrete() +  # Use different colors for each bar
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = "none")
 ```
 
 ## Removing Parallel Regions
@@ -159,9 +167,10 @@ experiment0 <- df %>%
 ggplot(data = experiment0, aes(x = factor(exp0), y = exp0t, fill = factor(exp0))) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = round(exp0t, 2)), vjust = -0.5) +  # Add text labels with rounded values
-  labs(x = "Function", y = "Time(s)") +
+  labs(x = "Function", y = "Time(s)", fill="Function") +
   scale_fill_discrete() +  # Use different colors for each bar
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 # Experiment 1 - Time taken as number of threads increase
@@ -190,6 +199,7 @@ ggplot(df, aes(x = exp1, y = exp1t)) +
   ) +
   theme_minimal()
 ```
+\newpage
 
 # Experiment 2 - Investigating time vs number of fish
 Experiment 2 investigates the increase in time taken as the number of fish increases. This experiment makes use of the base case parallel function. The number of steps and threads are held constant and the only variable changed is the number of fish.  
@@ -216,6 +226,7 @@ ggplot(df, aes(x = exp2, y = exp2t)) +
   theme_minimal()+
   scale_y_continuous(breaks = seq(0, max(df$exp2t), by = 20)) 
 ```
+\newpage
 
 # Experiment 3 - Comparing Steps and Fishes
 Experiment 3 investigates the increase in time taken as the number of steps increases. This experiment makes use of the base case functions parallel function. The number of fish and threads are held constant and the only variable changed is the number of steps.  
@@ -313,8 +324,11 @@ ggplot(data=subset(experiment4, !is.na(exp4)), aes(x = exp4, y = exp4t, fill = e
   geom_text(aes(label = round(exp4t, 2)), vjust = -0.5) +  # Add text labels with rounded values
   labs(x = "Scheduling Type", y = "Time(s)") +
   scale_fill_discrete() +  # Use different colors for each bar
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
+
+
 
 ## Different scheduling methods across multiple threads
 
@@ -347,7 +361,7 @@ ggplot(data = df2_long, aes(x = Threads, y = Value, color = Variable, shape = Va
   geom_line() +
   scale_x_continuous(trans = 'log2') + 
   theme_minimal() +
-  labs(title = "Performance by Scheduling Type", x = "Num Threads", y = "Time(s)")
+  labs(title = "Performance by Scheduling Type", x = "Num Threads", y = "Time(s)", color="Schedule Type", shape="Schedule Type")
 ```
 
 ## Different Chunksize
@@ -372,7 +386,7 @@ ggplot(data = df2_long, aes(x = Chunksize, y = Value, color = Variable, shape = 
   geom_line() +
   scale_x_continuous(trans = 'log10') + 
   theme_minimal() +
-  labs(title = "Performance by Chunksize", x = "Chunksize", y = "Time(s)")
+  labs(title = "Performance by Chunksize", x = "Chunksize", y = "Time(s)", color="Schedule Type", shape="Schedule Type")
 ```
 
 # Experiment 5 - Tasks and Sections
@@ -410,7 +424,8 @@ ggplot(data=subset(experiment5, !is.na(exp5)), aes(x = exp5, y = exp5t, fill = e
   geom_text(aes(label = round(exp5t, 2)), vjust = -0.5) +  # Add text labels with rounded values
   labs(x = "Construct Type", y = "Time(s)") +
   scale_fill_discrete() +  # Use different colors for each bar
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 ## Tasks and Sections across multiple threads
@@ -432,7 +447,7 @@ Similar to experiment 4, a sub-experiment was conducted to compare the performan
 ```{r, echo=FALSE, warning=FALSE}
 # Convert the data to long format
 df2_long_2 <- df2 %>%
-  pivot_longer(cols = -c("Threads", "Static", "Dynamic", "Guided", "Runtime"), names_to = "Variable", values_to = "Value")
+  pivot_longer(cols = -c("Threads", "Static", "Dynamic", "Guided", "Runtime", "Static_Chunks", "Dynamic_Chunks", "Chunksize"), names_to = "Variable", values_to = "Value")
 
 # Plot the data using ggplot
 ggplot(data = df2_long_2, aes(x = Threads, y = Value, color = Variable, shape = Variable)) +
@@ -440,7 +455,7 @@ ggplot(data = df2_long_2, aes(x = Threads, y = Value, color = Variable, shape = 
   geom_line() +
   scale_x_continuous(trans = 'log2') + 
   theme_minimal() +
-  labs(title = "Performance by Construct", x = "Num Threads", y = "Time(s)")
+  labs(title = "Performance by Construct", x = "Num Threads", y = "Time(s)", color="Construct", shape="Construct")
 ```
 
 # Conclusion
