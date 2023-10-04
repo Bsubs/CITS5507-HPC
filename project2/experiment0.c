@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
 #include <mpi.h>
 #include "fish.h"
@@ -12,7 +13,7 @@ void writeFishToFile(const char *filename, Fish *fishArray, int numfish) {
 
     for (int i = 0; i < numfish; i++) {
         fprintf(fp, "x_coord: %f\n", fishArray[i].x_c);
-        fprintf(fp, "y_coord: %f\n", fishArray[i].y_c)
+        fprintf(fp, "y_coord: %f\n", fishArray[i].y_c);
     }
     fclose(fp);
 }
@@ -55,5 +56,7 @@ int main(int argc, char* argv[]) {
     free(localFishArray);
     
     MPI_Finalize();
+
+    printf("test: %d\n", size);
     return 0;
 }
