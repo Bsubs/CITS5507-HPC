@@ -21,7 +21,7 @@
  * @param numfish An integer representing the number of fishes in fishArray.
  * @param numsteps An integer representing the number of simulation steps to be performed.
  */
-void parallelReductionOld(Fish* fishArray, int numfish, int numsteps){
+void parallelReduction(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;
@@ -64,7 +64,7 @@ void parallelReductionOld(Fish* fishArray, int numfish, int numsteps){
  * @param numfish An integer representing the number of fishes in fishArray.
  * @param numsteps An integer representing the number of simulation steps to be performed.
  */
-void parallelReduction(Fish* fishArray, int numfish, int numsteps){
+void parallelReductionCondensed(Fish* fishArray, int numfish, int numsteps){
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double sumOfProduct = 0;
