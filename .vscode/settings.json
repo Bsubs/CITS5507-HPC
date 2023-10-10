@@ -3,6 +3,7 @@
         "omp_parallel_for_schedule.h": "c",
         "time.h": "c",
         "limits": "c",
-        "omp.h": "c"
+        "omp.h": "c",
+        "fish.h": "c"
     }
 }

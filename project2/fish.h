@@ -1,6 +1,7 @@
 #ifndef FISH_H
 #define FISH_H
 #define STARTWEIGHT 10000
+#define NUMFIELDS 5
 
 /**
  * Author: Joo Kai TAY (22489437)
