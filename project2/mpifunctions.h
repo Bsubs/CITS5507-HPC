@@ -6,6 +6,6 @@
  * Author: Joo Kai TAY (22489437)
 */
 
-
+void mpiParallel(Fish* fishArray, int numfish, int numsteps);
 
 #endif

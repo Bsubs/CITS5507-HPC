@@ -45,9 +45,10 @@ void mpiParallel(Fish* fishArray, int numfish, int numsteps) {
         double sumOfProduct = 0;
         double sumOfDistance = 0;
 
-        // When do we scatter and gather
-        MPI_Scatter(fishArray, fish_per_process, MPI_FISH, localFishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
-
+        if(rank == 0){
+            // When do we scatter and gather
+            MPI_Scatter(fishArray, fish_per_process, MPI_FISH, localFishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
+        }
 
         // Loops through local fish array chunk and finds maxDiff in the current round
         for(int j = start; j < end; j++) {
@@ -55,7 +56,7 @@ void mpiParallel(Fish* fishArray, int numfish, int numsteps) {
             if(dist > localMaxDiff) {localMaxDiff = dist;}
         }
 
-        // Compute global maxDiff using MPI_Allreduce
+        //  Compute global maxDiff using MPI_Allreduce
         MPI_Allreduce(&localMaxDiff, &maxDiff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
         // Loops through local fish array chunk and performs eat & swim operations
