@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include "fish.h"
 #include "mpifunctions.h"
+#define NUMFIELDS 5
+
 
 void mpiParallel(Fish* fishArray, int numfish, int numsteps) {
     int rank, size;

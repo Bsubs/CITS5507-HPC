@@ -7,47 +7,44 @@
 #include "fish.h"
 #include <time.h>
 
+/**
+ * Experiment 1: Sequential Code with MPI
+ * This experiment expands on the best sequential function from project 1
+ * Uses MPI to divide the fishArray among the processes
+*/
 int main(int argc, char* argv[]) {
+    // Initialize params
     int numfish = 1000000;
     int numsteps = 1000;
     Fish *fishArray;
     int rank, size;
+    srand(time(NULL));
+
+    // Initialize MPI
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    srand(time(NULL));
 
+    // Create the MPI_FISH type for sending fish
+    MPI_Datatype MPI_FISH = create_mpi_fish_datatype();
+
+    // Start timer
     double start;
     if (rank == 0){
         start = omp_get_wtime();
     }
 
-    // Create Fish MPI struct, do it here?
-    MPI_Datatype MPI_FISH;
-    MPI_Datatype types[NUMFIELDS] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
-    int blocklengths[NUMFIELDS] = {1, 1, 1, 1, 1};
-    MPI_Aint offsets[NUMFIELDS];
-
-    offsets[0] = offsetof(Fish, euclDist);
-    offsets[1] = offsetof(Fish, x_c);
-    offsets[2] = offsetof(Fish, y_c);
-    offsets[3] = offsetof(Fish, weight_c);
-    offsets[4] = offsetof(Fish, weight_p);
-
-    MPI_Type_create_struct(NUMFIELDS, blocklengths, offsets, types, &MPI_FISH);
-   	MPI_Type_commit(&MPI_FISH);
-
-
+    // Initialize fishArray in master
     if(rank == 0){
         // When do we scatter and gather
         fishArray = initializeFish(numfish);
     }
 
-
+    // Prepare division & array for scatter in loop
     int fish_per_process = numfish / size;
     Fish* localFishArray = malloc(fish_per_process * sizeof(Fish));
 
-
+    // Loop for number of steps
     for(int i = 0; i < numsteps; i++){
         double maxDiff = 0;
         double localMaxDiff = 0;
@@ -87,12 +84,17 @@ int main(int argc, char* argv[]) {
         // Gather fish back
         MPI_Gather(localFishArray, fish_per_process, MPI_FISH, fishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
 
+        // Compute barycentre in master
         if(rank == 0) {
             double barycentre = sumOfProduct / sumOfDistance;
         }
     }
 
+    // Get time, free arrays, free MPI_FISH
     if (rank == 0){
+        free(fishArray);
+        free(localFishArray);
+        free(MPI_FISH);
         double end = omp_get_wtime();
         double timeElapsed = end - start;
         printf("Average time for MPI elapsed: %10.6f\n",timeElapsed );

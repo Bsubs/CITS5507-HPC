@@ -7,6 +7,7 @@
  * Author: Joo Kai TAY (22489437)
 */
 
+// Fish struct
 typedef struct fish {
     double euclDist;
     // Current
@@ -17,10 +18,14 @@ typedef struct fish {
     double weight_p;
 } Fish;
 
-// Functions implemented
+// MPI_FISH
+extern MPI_Datatype MPI_FISH;
+
+// Fish Functions implemented
 Fish* initializeFish(int numfish);
 double distance(double x, double y);
 void swim(Fish* fish1);
 void eat(Fish* fish1, double maxObj, int step);
+MPI_Datatype create_mpi_fish_datatype();
 
 #endif

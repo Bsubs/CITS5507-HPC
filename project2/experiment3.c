@@ -8,7 +8,7 @@
 #include "fish.h"
 
 /**
- * Experiment 2: Parallel Code with MPI
+ * Experiment 3: Parallel Code with MPI
  * This experiment expands on the best parallel function from project 1
  * Uses MPI to divide the fishArray among the processes
  * Each process will have n threads 

@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <mpi.h>
+#include <stddef.h>
 #include "fish.h"
+
 
 /**
  * @brief Initialize an array of Fish structures.
@@ -124,3 +127,21 @@ void swim(Fish* fish1){
     }
 }
 
+MPI_Datatype create_mpi_fish_datatype() {
+    MPI_Datatype MPI_FISH;
+    MPI_Datatype types[NUMFIELDS] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
+    int blocklengths[NUMFIELDS] = {1, 1, 1, 1, 1};
+    MPI_Aint offsets[NUMFIELDS];
+
+    offsets[0] = offsetof(Fish, euclDist);
+    offsets[1] = offsetof(Fish, x_c);
+    offsets[2] = offsetof(Fish, y_c);
+    offsets[3] = offsetof(Fish, weight_c);
+    offsets[4] = offsetof(Fish, weight_p);
+
+    MPI_Type_create_struct(NUMFIELDS, blocklengths, offsets, types, &MPI_FISH);
+    MPI_Type_commit(&MPI_FISH);
+    return(MPI_FISH);
+}
+
+ 
