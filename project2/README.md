@@ -15,9 +15,10 @@ Things to do:
 4. MPI - Use normal reduction operators (manually send stuff)
 
 Part 1:
-1. Scatter & Gather (done)
-2. Send & Receive
-3. Broadcast (if I have time)
+- Experiment 0:
+    1. Scatter & Gather (done)
+    2. Send & Receive
+    3. Broadcast (if I have time)
 
 Part 2:
 
