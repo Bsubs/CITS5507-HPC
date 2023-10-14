@@ -13,6 +13,7 @@ Things to do:
 2. Parallel with millions of fish
 3. MPI - Use global reduction operators
 4. MPI - Use normal reduction operators (manually send stuff)
+5. Come up with thread safe mpi parallel stuff
 
 Part 1:
 - Experiment 0:
@@ -26,8 +27,20 @@ Part 2:
 - Run with 1,2,3,4 processes 
 - Run with 2, 4, 6, 8, 16 threads
 
-1. Base Sequential case (project1)
-2. Base Parallel case (project1)
-3. Base sequential MPI case (experiment1)
-4. Base parallel MPI case (experiment2)
-5. look into scheduling, etc 
+- Experiment 1:
+    - Base Sequential case (project1)
+
+- Experiment 2:
+    - Base Parallel case (project1)
+
+- Experiment 3:
+    - Base sequential MPI case (experiment1)
+    - Processes
+
+- Experiment 4
+    - Base parallel MPI case (experiment2)
+    - Processes
+    - Threads
+
+
+- look into scheduling, etc 

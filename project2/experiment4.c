@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize params
     int numfish = 1000000;
-    int numsteps = 1000;
+    int numsteps = 2000;
     Fish *fishArray;
     int rank, size;
     srand(time(NULL));
@@ -102,10 +102,10 @@ int main(int argc, char* argv[]) {
     if (rank == 0){
         free(fishArray);
         free(localFishArray);
-        free(MPI_FISH);
+        free(&MPI_FISH);
         double end = omp_get_wtime();
         double timeElapsed = end - start;
-        printf("Average time for MPI elapsed: %10.6f\n",timeElapsed );
+        printf("Time for MPI Parallel_Base for %d fish elapsed: %10.6f\n", numfish, timeElapsed);
     }
 
     MPI_Finalize();
