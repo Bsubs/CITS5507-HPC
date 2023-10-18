@@ -9,5 +9,6 @@
 #module load  openmpi/4.0.5
 
 export OMP_NUM_THREADS=4
-mpicc -fopenmp -o experiment4 experiment4.c fish.c -lm
-srun ./experiment4
+echo "Num Nodes: 4"
+mpicc -fopenmp -o experiment8 experiment8.c fish.c -lm
+srun ./experiment8

@@ -51,8 +51,15 @@ int main(int argc, char* argv[]) {
         double sumOfProduct = 0;
         double sumOfDistance = 0;
 
-        // Initial scatter
-        MPI_Scatter(fishArray, fish_per_process, MPI_FISH, localFishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
+        // Manual scatter using MPI_Send and MPI_Recv
+        for(int i = 0; i < size; i++) {
+            if(rank == 0) {
+                MPI_Send(&fishArray[i * fish_per_process], fish_per_process, MPI_FISH, i, 0, MPI_COMM_WORLD);
+            }
+            if(rank == i) {
+                MPI_Recv(localFishArray, fish_per_process, MPI_FISH, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+        }
 
         // Loops through local fish array chunk and finds maxDiff in the current round
         for(int j = 0; j < fish_per_process; j++) {
@@ -81,8 +88,15 @@ int main(int argc, char* argv[]) {
         MPI_Allreduce(&localSumOfProduct, &sumOfProduct, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&localSumOfDistance, &sumOfDistance, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        // Gather fish back
-        MPI_Gather(localFishArray, fish_per_process, MPI_FISH, fishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
+        // Manual gather using MPI_Send and MPI_Recv
+        for(int i = 0; i < size; i++) {
+            if(rank == i) {
+                MPI_Send(localFishArray, fish_per_process, MPI_FISH, 0, 1, MPI_COMM_WORLD);
+            }
+            if(rank == 0) {
+                MPI_Recv(&fishArray[i * fish_per_process], fish_per_process, MPI_FISH, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+        }
 
         // Compute barycentre in master
         if(rank == 0) {
@@ -94,7 +108,6 @@ int main(int argc, char* argv[]) {
     if (rank == 0){
         free(fishArray);
         free(localFishArray);
-        free(&MPI_FISH);
         double end = omp_get_wtime();
         double timeElapsed = end - start;
         printf("Time for MPI Sequential for %d fish elapsed: %10.6f\n", numfish, timeElapsed );

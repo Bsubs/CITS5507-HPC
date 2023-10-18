@@ -9,8 +9,8 @@
 
 module load gcc
 
-gcc -o experiment1 experiment1.c fish.c sequential.c parallel_functions.c -fopenmp -lm
+gcc -o experiment3 experiment3.c fish.c sequential.c parallel_functions.c -fopenmp -lm
 
 export OMP_NUM_THREADS=4 
 
-srun ./experiment1
+srun ./experiment3

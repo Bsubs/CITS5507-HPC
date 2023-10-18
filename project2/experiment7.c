@@ -22,11 +22,11 @@ int main(int argc, char* argv[]) {
     int numfish = 1000000;
     int numsteps = 2000;
     Fish *fishArray;
-    int rank, size;
+    int rank, size, provided;
     srand(time(NULL));
 
     // Initialize MPI
-    MPI_Init(NULL, NULL);
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
         double sumOfDistance = 0;
 
         // Initial scatter
+        #pragma omp critical
         MPI_Scatter(fishArray, fish_per_process, MPI_FISH, localFishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
 
         // Loops through local fish array chunk and finds maxDiff in the current round
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Use global reduction to get max diff
+        #pragma omp critical
         MPI_Allreduce(&localMaxDiff, &maxDiff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
         // Loops through local fish array chunk and performs eat & swim operations
@@ -86,10 +88,12 @@ int main(int argc, char* argv[]) {
         }
 
         // Compute global sumOfProduct and sumOfDistance
+        #pragma omp critical
         MPI_Allreduce(&localSumOfProduct, &sumOfProduct, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&localSumOfDistance, &sumOfDistance, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
         // Gather fish back
+        #pragma omp critical
         MPI_Gather(localFishArray, fish_per_process, MPI_FISH, fishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
 
         // Compute barycentre in master
@@ -102,7 +106,6 @@ int main(int argc, char* argv[]) {
     if (rank == 0){
         free(fishArray);
         free(localFishArray);
-        free(&MPI_FISH);
         double end = omp_get_wtime();
         double timeElapsed = end - start;
         printf("Time for MPI Parallel_Base for %d fish elapsed: %10.6f\n", numfish, timeElapsed);

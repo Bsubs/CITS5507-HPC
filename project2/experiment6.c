@@ -4,15 +4,20 @@
 #include <string.h>
 #include <mpi.h>
 #include <stddef.h>
-#include "fish.h"
 #include <time.h>
+#include "fish.h"
 
 /**
- * Experiment 1: Sequential Code with MPI
- * This experiment expands on the best sequential function from project 1
+ * Experiment 2: Parallel Code with MPI
+ * This experiment expands on the best parallel function from project 1
  * Uses MPI to divide the fishArray among the processes
+ * Each process will have n threads 
 */
 int main(int argc, char* argv[]) {
+    // Set num threads
+    omp_set_num_threads(4);
+    int numthreads;
+
     // Initialize params
     int numfish = 1000000;
     int numsteps = 2000;
@@ -51,17 +56,11 @@ int main(int argc, char* argv[]) {
         double sumOfProduct = 0;
         double sumOfDistance = 0;
 
-        // Manual scatter using MPI_Send and MPI_Recv
-        for(int i = 0; i < size; i++) {
-            if(rank == 0) {
-                MPI_Send(&fishArray[i * fish_per_process], fish_per_process, MPI_FISH, i, 0, MPI_COMM_WORLD);
-            }
-            if(rank == i) {
-                MPI_Recv(localFishArray, fish_per_process, MPI_FISH, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-        }
+        // Initial scatter
+        MPI_Scatter(fishArray, fish_per_process, MPI_FISH, localFishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
 
         // Loops through local fish array chunk and finds maxDiff in the current round
+        #pragma omp parallel for reduction(max:maxDiff)
         for(int j = 0; j < fish_per_process; j++) {
             double dist = distance(localFishArray[j].x_c, localFishArray[j].y_c) - localFishArray[j].euclDist;
             if(dist > localMaxDiff) {localMaxDiff = dist;}
@@ -71,6 +70,7 @@ int main(int argc, char* argv[]) {
         MPI_Allreduce(&localMaxDiff, &maxDiff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
         // Loops through local fish array chunk and performs eat & swim operations
+        #pragma omp parallel for
         for(int j = 0; j < fish_per_process; j++){
             eat(&localFishArray[j], maxDiff, i);
             swim(&localFishArray[j]);
@@ -79,6 +79,7 @@ int main(int argc, char* argv[]) {
         // Loops through local fish array chunk and accumulates variables for barycentre
         double localSumOfProduct = 0;
         double localSumOfDistance = 0;
+        #pragma omp parallel for reduction(+:sumOfProduct,sumOfDistance)
         for(int j = 0; j < fish_per_process; j++){
             localSumOfProduct += localFishArray[j].euclDist * localFishArray[j].weight_p;
             localSumOfDistance += localFishArray[j].euclDist;
@@ -88,15 +89,8 @@ int main(int argc, char* argv[]) {
         MPI_Allreduce(&localSumOfProduct, &sumOfProduct, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce(&localSumOfDistance, &sumOfDistance, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        // Manual gather using MPI_Send and MPI_Recv
-        for(int i = 0; i < size; i++) {
-            if(rank == i) {
-                MPI_Send(localFishArray, fish_per_process, MPI_FISH, 0, 1, MPI_COMM_WORLD);
-            }
-            if(rank == 0) {
-                MPI_Recv(&fishArray[i * fish_per_process], fish_per_process, MPI_FISH, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-        }
+        // Gather fish back
+        MPI_Gather(localFishArray, fish_per_process, MPI_FISH, fishArray, fish_per_process, MPI_FISH, 0, MPI_COMM_WORLD);
 
         // Compute barycentre in master
         if(rank == 0) {
@@ -108,9 +102,10 @@ int main(int argc, char* argv[]) {
     if (rank == 0){
         free(fishArray);
         free(localFishArray);
+        free(&MPI_FISH);
         double end = omp_get_wtime();
         double timeElapsed = end - start;
-        printf("Time for MPI Sequential for %d fish elapsed: %10.6f\n", numfish, timeElapsed );
+        printf("Time for MPI Parallel_Base for %d fish elapsed: %10.6f\n", numfish, timeElapsed);
     }
 
     MPI_Finalize();
