@@ -3,10 +3,10 @@ title: "CITS7707 Project 2 Report"
 author: "Joo Kai Tay (22489437)"
 date: "2023-10-16"
 output:
-  pdf_document: default
-  word_document: default
   html_document:
     number_sections: yes
+  word_document: default
+  pdf_document: default
 ---
 <style>
 body {
