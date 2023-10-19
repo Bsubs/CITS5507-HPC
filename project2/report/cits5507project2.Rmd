@@ -3,8 +3,8 @@ title: "CITS7707 Project 2 Report"
 author: "Joo Kai Tay (22489437)"
 date: "2023-10-16"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
   html_document:
     number_sections: yes
 ---
@@ -344,7 +344,7 @@ grid.arrange(p1,p2,ncol=2)
 
 The plot above shows the increase in time taken as the number of threads increase for MPI + OpenMP and just OpenMP. For just OpenMP, the increase in time as the number of threads increase is relatively linear. However for MPI + OpenMP, the increase from 2-4 threads is significantly smaller than the increase from 4-8 threads. 
 
-## Compare all functions 
+# Conclusion
 
 ```{r, echo=FALSE}
 df3 <- subset(df, select=c(NumFish, SeqBaseT, ParBaseT, MPISeqBaseT, MPIParBaseT))
