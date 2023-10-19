@@ -9,38 +9,26 @@ scp * jookaitay@setonix.pawsey.org.au:./project2
 
 
 Things to do:
-1. Sequential with millions of fish
-2. Parallel with millions of fish
+
+Part 1
+1. Implement Scatter and gather
+2. Implement send and receive
+3. Implement broadcast? Maybe
+
+For part 1: time the different implementations. Try massive ass arrays if timing is not good 
+
+Part 2 (up to 10million fish)
+1. Best case sequential
+2. Best case parallel
 3. MPI - Use global reduction operators
 4. MPI - Use normal reduction operators (manually send stuff)
-5. Come up with thread safe mpi parallel stuff
 
-Part 1:
-- Experiment 0:
-    1. Scatter & Gather (done)
-    2. Send & Receive
-    3. Broadcast (if I have time)
-
-Part 2:
-
-- Run with 10,000,000 fish and 1,000 steps
-- Run with 1,2,3,4 processes 
-- Run with 2, 4, 6, 8, 16 threads
-
-- Experiment 1:
-    - Base Sequential case (project1)
-
-- Experiment 2:
-    - Base Parallel case (project1)
-
-- Experiment 3:
-    - Base sequential MPI case (experiment1)
-    - Processes
-
-- Experiment 4
-    - Base parallel MPI case (experiment2)
-    - Processes
-    - Threads
-
-
-- look into scheduling, etc 
+- experiment 0: File writing (scatter gather)
+- experiment 1: File writing (send and receive)
+- experiment 2: File writing (broadcast)
+- experiment 3: Sequential
+- experiment 4: OMP Parallel
+- experiment 5: MPI Sequential
+- experiment 6: MPI Parallel Base
+- experiment 7: MPI Parallel Threadsafe
+- experiment 8: MPI Sequential (Scatter and Gather)

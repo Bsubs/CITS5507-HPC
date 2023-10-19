@@ -29,6 +29,8 @@ int main(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // Create the MPI_FISH type for sending fish
+    MPI_Datatype MPI_FISH = create_mpi_fish_datatype();
 
     if (size != 4) {
         printf("This program requires 4 MPI processes (1 master and 3 workers).\n");
@@ -43,18 +45,26 @@ int main(int argc, char* argv[]) {
     }
 
     localFishArray = (Fish *)malloc(sizeof(Fish) * localSize);
-    
+
     // Manual scatter using MPI_Send and MPI_Recv
     for(int i = 0; i < size; i++) {
         if(rank == 0) {
-            MPI_Send(&fishArray[i * fish_per_process], fish_per_process, MPI_FISH, i, 0, MPI_COMM_WORLD);
+            MPI_Send(&fishArray1[i * localSize], localSize, MPI_FISH, i, 0, MPI_COMM_WORLD);
         }
         if(rank == i) {
-            MPI_Recv(localFishArray, fish_per_process, MPI_FISH, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(localFishArray, localSize, MPI_FISH, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     }
-    
-    MPI_Gather(localFishArray, localSize*sizeof(Fish), MPI_BYTE, fishArray1, localSize*sizeof(Fish), MPI_BYTE, 0, MPI_COMM_WORLD);
+
+    // Manual gather using MPI_Send and MPI_Recv
+    for(int i = 0; i < size; i++) {
+        if(rank == i) {
+            MPI_Send(localFishArray, localSize, MPI_FISH, 0, 1, MPI_COMM_WORLD);
+        }
+        if(rank == 0) {
+            MPI_Recv(&fishArray1[i * localSize], localSize, MPI_FISH, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    }
 
     if (rank == 0) {
         writeFishToFile("final_data.txt", fishArray1, numfish);
