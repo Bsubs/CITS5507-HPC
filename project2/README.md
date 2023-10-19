@@ -1,34 +1,54 @@
-# CITS5507 Project 1 
+# CITS5507 Project 2 
 
 Author: Joo Kai TAY (22489437)
 
+## Functions
 
-ssh -Y jookaitay@setonix.pawsey.org.au
+- Fish Simulation
+    - fish.h: Header file containing definiton of Fish structure and fish functions 
+    - fish.c: Implementation of functions to manipulate the Fish structure
 
-scp * jookaitay@setonix.pawsey.org.au:./project2
+## Experiments
 
+The results and analysis of each of the following experiments can be found in the report. To run any of the following experiments, SSH into Setonix and follow the commands listed below:
 
-Things to do:
+- Experiment 0 
+    - This experiment tests file writing using collective communication `MPI_Scatter` and `MPI_Gather`
+    - experiment0.c: The main function for Experiment 0.
+    - experiment0.sh: `sbatch experiment0.sh` to run this experiment
 
-Part 1
-1. Implement Scatter and gather
-2. Implement send and receive
-3. Implement broadcast? Maybe
+- Experiment 1 
+    - This experiment tests file writing using point-to-point communication `MPI_Send` and `MPI_Receive`
+    - experiment1.c: The main function for Experiment 1.
+    - experiment1.sh: `sbatch experiment1.sh` to run this experiment
 
-For part 1: time the different implementations. Try massive ass arrays if timing is not good 
+- Experiment 3 
+    - Experiment 3 runs the best sequential code from project 1
+    - experiment3.c: The main function for Experiment 3.
+    - experiment3.sh: `sbatch experiment3.sh` to run this experiment
 
-Part 2 (up to 10million fish)
-1. Best case sequential
-2. Best case parallel
-3. MPI - Use global reduction operators
-4. MPI - Use normal reduction operators (manually send stuff)
+- Experiment 4 
+    - Experiment 4 runs the best sequential code from experiment 2
+    - experiment4.c: The main function for Experiment 4.
+    - experiment4.sh: `sbatch experiment4.sh` to run this experiment
 
-- experiment 0: File writing (scatter gather)
-- experiment 1: File writing (send and receive)
-- experiment 2: File writing (broadcast)
-- experiment 3: Sequential
-- experiment 4: OMP Parallel
-- experiment 5: MPI Sequential
-- experiment 6: MPI Parallel Base
-- experiment 7: MPI Parallel Threadsafe
-- experiment 8: MPI Sequential (Scatter and Gather)
+- Experiment 5 
+    - Experiment 5 runs sequential code with MPI
+    - experiment5.c: The main function for Experiment 5.
+    - experiment5.sh: `sbatch experiment5.sh` to run this experiment
+
+- Experiment 6 
+    - Experiment 6 runs parallel code with MPI
+    - experiment6.c: The main function for Experiment 6.
+    - experiment6.sh: `sbatch experiment6.sh` to run this experiment
+
+- Experiment 7 
+    - Experiment 7 runs parallel code with MPI with MPI_init_thread
+    - experiment7.c: The main function for Experiment 7.
+    - experiment7.sh: `sbatch experiment7.sh` to run this experiment
+
+- Experiment 8
+    - Experiment 8 runs sequential code with `MPI_Send` and `MPI_Receive`
+    - experiment8.c: The main function for Experiment 8.
+    - experiment8.sh: `sbatch experiment8.sh` to run this experiment    
+

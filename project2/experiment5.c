@@ -8,7 +8,7 @@
 #include <time.h>
 
 /**
- * Experiment 1: Sequential Code with MPI
+ * Experiment 5: Sequential Code with MPI
  * This experiment expands on the best sequential function from project 1
  * Uses MPI to divide the fishArray among the processes
 */

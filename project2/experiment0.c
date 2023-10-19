@@ -18,8 +18,12 @@ void writeFishToFile(const char *filename, Fish *fishArray, int numfish) {
     fclose(fp);
 }
 
+/**
+ * This experiment performs file writing using collective communication 
+ * of MPI_Scatter and MPI_Gather
+*/
 int main(int argc, char* argv[]) {
-    int numfish = 10000;
+    int numfish = 10000000;
     Fish *fishArray1;
     Fish *localFishArray;
     int size, rank;
@@ -29,6 +33,12 @@ int main(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Start timer
+    double start;
+    if (rank == 0){
+        start = omp_get_wtime();
+    }
 
     if (size != 4) {
         printf("This program requires 4 MPI processes (1 master and 3 workers).\n");
@@ -51,12 +61,14 @@ int main(int argc, char* argv[]) {
     if (rank == 0) {
         writeFishToFile("final_data.txt", fishArray1, numfish);
         free(fishArray1);
+        double end = omp_get_wtime();
+        double timeElapsed = end - start;
+        printf("Time for Scatter Gather for %d fish elapsed: %10.6f\n", numfish, timeElapsed );
     }
 
     free(localFishArray);
     
     MPI_Finalize();
 
-    printf("test: %d\n", size);
     return 0;
 }

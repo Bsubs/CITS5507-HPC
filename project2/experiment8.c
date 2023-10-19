@@ -8,9 +8,10 @@
 #include <time.h>
 
 /**
- * Experiment 1: Sequential Code with MPI
+ * Experiment 8: Sequential Code with MPI
  * This experiment expands on the best sequential function from project 1
  * Uses MPI to divide the fishArray among the processes
+ * Uses MPI_Send and MPI_Receive to test point-to-point communication
 */
 int main(int argc, char* argv[]) {
     // Initialize params

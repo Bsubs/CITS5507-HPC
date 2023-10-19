@@ -18,8 +18,12 @@ void writeFishToFile(const char *filename, Fish *fishArray, int numfish) {
     fclose(fp);
 }
 
+/**
+ * This experiment performs file writing using point-to-point communication 
+ * of MPI_Send and MPI_Receive
+*/
 int main(int argc, char* argv[]) {
-    int numfish = 10000;
+    int numfish = 100000000;
     Fish *fishArray1;
     Fish *localFishArray;
     int size, rank;
@@ -31,6 +35,12 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     // Create the MPI_FISH type for sending fish
     MPI_Datatype MPI_FISH = create_mpi_fish_datatype();
+
+    // Start timer
+    double start;
+    if (rank == 0){
+        start = omp_get_wtime();
+    }
 
     if (size != 4) {
         printf("This program requires 4 MPI processes (1 master and 3 workers).\n");
@@ -69,12 +79,14 @@ int main(int argc, char* argv[]) {
     if (rank == 0) {
         writeFishToFile("final_data.txt", fishArray1, numfish);
         free(fishArray1);
+        double end = omp_get_wtime();
+        double timeElapsed = end - start;
+        printf("Time for Send Receive for %d fish elapsed: %10.6f\n", numfish, timeElapsed );
     }
 
     free(localFishArray);
     
     MPI_Finalize();
 
-    printf("test: %d\n", size);
     return 0;
 }
