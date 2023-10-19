@@ -3,10 +3,10 @@ title: "CITS7707 Project 2 Report"
 author: "Joo Kai Tay (22489437)"
 date: "2023-10-16"
 output:
-  html_document:
-    number_sections: yes
   word_document: default
   pdf_document: default
+  html_document:
+    number_sections: yes
 ---
 <style>
 body {
@@ -100,13 +100,47 @@ void swim(Fish* fish1)
 
 # File Writing
 
-In this experiment, we establish effective communication using MPI `scatter` and `gather`. This demonstrates that we can effectively communicate between up to 4 MPI processes. The master process (rank == 0) generates the fish data and distributes it to the 4 nodes (including itself) using gather. Immediately after, it will write to a file named `initial_data.txt`. The master process will then gather the data back and write it into `final_data.txt`. 
+The deliverable is investigating the method to deliver effective communication between MPI processes. We want to establish the best method for communication so that the code in the following sections will run as efficiently as possible. The master process (rank == 0) generates the fish data and distributes it to the 4 nodes (including itself) using gather. Immediately after, it will write to a file named `initial_data.txt`. The master process will then gather the data back and write it into `final_data.txt`. 
 
-The code to perform this experiment is stored in `experiment0.c`. Run this code using the command:
+In this experiment, we will compare collective communication operations  (like MPI_Scatter and MPI_Gather) with point-to-point operations  (like MPI_Send and MPI_Recv) to determine which is the most suitable for transmitting the FISH data. 
 
+- Source file: `experiment0.c` & `experiment1.c`
+- Run with: `sbatch experiment0.sh` & `sbatch experiment1.sh`
+- Number of fish: 100,000,000
+- Number of nodes: 4
+
+The file experiment0.c uses `MPI_Scatter and MPI_Gather` to distribute the Fish data to the 4 processes including the master and gather to data back. 
+
+The file experiment1.c uses `MPI_Send and MPI_Receive` to distribute the Fish data to the 4 processes including the master and gather to data back. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+df4 <- subset(df, select=c(MPIFileWriteScatter, MPIFileWriteSend))
+df4 <- df4 %>%
+  rename(
+    `Scatter & Gather` = MPIFileWriteScatter,
+    `Send & Receive` = MPIFileWriteSend
+  )
+# Convert data to long format
+df2_long <- gather(df4, key = "Category", value = "Value")
+
+# Create the bar chart
+ggplot(df2_long, aes(x = Category, y = Value, color=Category, fill=Category)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = sprintf("%.2f", round(Value, 2))),
+            vjust = -0.5,  # Adjust this for vertical positioning of the labels
+            size = 4) +
+  labs(title = "Time for 4 Nodes", y = "Time(s)", x="Implementation") +
+  theme_minimal()+
+  theme(legend.position = "none")
 ```
-sbatch experiment0.sh
-```
+
+From the plot above, we can see that using `MPI_Scatter & MPI_Gather` performed better than `MPI_Send and MPI_Receive`. There could be several reasons for this:
+
+- Synchronization: Collective communication functions provide implicit synchronization. This means that processes participating in a collective operation will reach a known state relative to one another, which can be particularly useful when distributing data as you often want all processes to start computing on their respective data chunks simultaneously.
+
+- Less Overhead: Using collective communication reduces the overhead of initiating and managing multiple point-to-point communication calls. When distributing a dataset, we have to send data to multiple processes, and managing these communications individually can be inefficient.
+
+## Comparing the file writing outputs
 
 Afterwards to compare the outputs:
 
@@ -135,7 +169,7 @@ The base case for this simulation was implemented using the `void sequential(Fis
 To run this simulation use the following command:
 
 ```
-sbatch experiment1.sh
+sbatch experiment3.sh
 ```
 
 ## Base Case - Parallel 
@@ -150,7 +184,7 @@ The base case for parallel functions in this simulation is the `void parallelRed
 To run this simulation use the following command:
 
 ```
-sbatch experiment2.sh
+sbatch experiment4.sh
 ```
 
 # Experiments
@@ -159,8 +193,8 @@ sbatch experiment2.sh
 
 In our initial experiment, we sought to evaluate the effect of using the MPI framework on the performance of the FSB algorithm. This required measuring the time of the MPI-only implementation, without any involvement of OpenMP threads. We will be comparing the MPI implementation with the base sequential implementation described above. 
 
-- Source file: `experiment1.c` & `experiment3.c`
-- Run with: `sbatch experiment1.sh` & `sbatch experiment3.sh`
+- Source file: `experiment3.c` & `experiment5.c`
+- Run with: `sbatch experiment3.sh` & `sbatch experiment5.sh`
 - Number of steps: 2000
 - Number of fish: 1,000,000
 - Number of nodes: 1, 2, 3, 4
@@ -191,13 +225,14 @@ These percentages are very close to 0.5, 0.33 and 0.25 of the total time taken. 
 
 ## Comparing different communication functions 
 
-- Source file: `experiment3.c` & `experiment4.c`
-- Run with: `sbatch experiment3.sh` & `sbatch experiment4.sh`
+- Source file: `experiment5.c` & `experiment8.c`
+- Run with: `sbatch experiment5.sh` & `sbatch experiment8.sh`
 - Number of steps: 2000
 - Number of fish: 1,000,000
 - Number of nodes: 2, 3, 4
 
-The second experiment in MPI will be to establish which is a more effective method of communicating the fish data to the various processes. We will be comparing using `MPI_Scatter` & `MPI_Gather` with manually sending the fish using `MPI_Send` and `MPI_Receive`. 
+The second experiment in MPI will be a follow up of the file writing experiment where we experiment with `MPI_Scatter` & `MPI_Gather` and `MPI_Send` & `MPI_Receive`. The earlier experiment tested the two different communication methods with 4 MPI nodes, and in this experiment we will vary the number of nodes to observe if changing the number of MPI nodes will affect the performance of the communication methods.  
+
 
 ```{r, echo=FALSE}
 df1 <- df[-1,]
@@ -225,7 +260,7 @@ Collective communications are also more predictable since they involve a known s
 
 Based on this knowledge, we will be using `MPI_Scatter` & `MPI_Gather` for communication between processes where we have to distribute fish in subsequent experiments. 
 
-## Experiment: Comparing MPI Sequential and MPI Parallel
+## Comparing MPI Sequential and MPI Parallel
 
 - Source file: `experiment3.c`, `experiment5.c`, `experiment6.c`
 - Run with: `sbatch experiment3.sh`, `sbatch experiment5.sh`, `sbatch experiment6.sh`
@@ -241,7 +276,7 @@ In this experiment, we will be comparing three scenarios:
 
 In theory, `MPI_Parallel` is still thread safe as it does not make MPI calls from anywhere other than the master thread, and the only difference between is using `MPI_Init` and `MPI_Init_thread`.
 
-```{r}
+```{r, echo=FALSE}
 ggplot(df,  aes(x = NumNodes)) +
   geom_line(aes(y=MPISeq)) +
   geom_line(aes(y=MPIParBaseNodes)) +
@@ -282,7 +317,7 @@ ggplot(df2_long, aes(x = Category, y = Value, color=Category, fill=Category)) +
 
 The plot above gives us a more detailed look at the timing of the three implementations. As previously stated, they are all very close in time taken. This is different from the results from project 1 where the implementations that made use of OpenMP were significantly slower than their sequential counterpart. 
 
-## Experiment 5: MPI parallel with different threads
+## MPI parallel with different threads
 
 - Source file: `experiment2.c`, `experiment5.c`
 - Run with: `sbatch experiment3.sh`, `sbatch experiment5.sh`
@@ -307,8 +342,9 @@ p2 <- ggplot(data=df, aes(x=NumThreads, y=ParBase))+
 grid.arrange(p1,p2,ncol=2)
 ```
 
+The plot above shows the increase in time taken as the number of threads increase for MPI + OpenMP and just OpenMP. For just OpenMP, the increase in time as the number of threads increase is relatively linear. However for MPI + OpenMP, the increase from 2-4 threads is significantly smaller than the increase from 4-8 threads. 
 
-## Experiment 6: Compare all functions 
+## Compare all functions 
 
 ```{r, echo=FALSE}
 df3 <- subset(df, select=c(NumFish, SeqBaseT, ParBaseT, MPISeqBaseT, MPIParBaseT))
@@ -331,7 +367,7 @@ p <- ggplot(df_long, aes(x = NumFish, y = Value, color = Variable, group = Varia
 print(p)
 ```
 
-
+The plot above shows the comparison of the functions with MPI and without MPI. It can be observed that as the size of the input grows, the benefits of using MPI increases. However, as seen in the results from both project 1 and project 2, the benefits of using multiple threads per process does not seem to benefit the Fish School Behavior (FSB) algorithm, as increasing the number of threads degrades the performance even for large input sizes (100,000,000 fish). Therefore, if we were to be implementing this algorithm in a research environment, we would focus on increasing the amount of resources for MPI, such as the ability to request more nodes. This would allow us to get the best possible performance. 
 
 
 
