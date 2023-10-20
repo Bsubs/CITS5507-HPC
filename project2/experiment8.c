@@ -1,3 +1,6 @@
+/**
+ * Author: Joo Kai TAY (22489437)
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>

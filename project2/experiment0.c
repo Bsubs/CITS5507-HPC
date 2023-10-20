@@ -1,3 +1,6 @@
+/**
+ * Author: Joo Kai TAY (22489437)
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
@@ -23,7 +26,7 @@ void writeFishToFile(const char *filename, Fish *fishArray, int numfish) {
  * of MPI_Scatter and MPI_Gather
 */
 int main(int argc, char* argv[]) {
-    int numfish = 10000000;
+    int numfish = 1000000;
     Fish *fishArray1;
     Fish *localFishArray;
     int size, rank;
